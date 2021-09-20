@@ -43,7 +43,7 @@ class Entry(tk.Frame):
         self.master.destroy()
   
 def entry(dict):
-    root = tk.Tk()
+    root = tk.Toplevel()
     app = Entry(master=root, dict=dict)
     app.mainloop()
 
@@ -74,6 +74,39 @@ class FileDialog(tk.Frame):
         filepath = filedialog.askopenfilename(filetype=filetype, initialdir=initdir)
         self.entry.delete(0,'end')
         self.entry.insert(0,filepath)
+
+    def get(self):
+        return self.entry.get()
+
+    def set(self,text):
+        self.entry.delete(0,'end')
+        self.entry.insert(0,text)
+
+class DirDialog(tk.Frame):
+    def __init__(self, master=None, text="", default="", dir=""):
+        super().__init__(master)
+        self.default = default
+        self.dir = dir
+
+        label = tk.Label(self.master, text=text)
+        label.pack(side=tk.LEFT)
+
+        self.entry = tk.Entry(self.master, width=30)
+        self.entry.pack(side=tk.LEFT)
+
+        button1 = tk.Button(self.master, text="search...", command=self.dirdialog)
+        button1.pack(side=tk.LEFT)
+
+    def dirdialog(self):
+        if self.default:
+            initdir = self.default
+        else:
+            initdir = os.path.abspath(os.path.dirname(__file__))
+            if self.dir:
+                initdir = os.path.join(initdir, self.dir)
+        dirpath = filedialog.askdirectory(initialdir=initdir)
+        self.entry.delete(0,'end')
+        self.entry.insert(0,dirpath)
 
     def get(self):
         return self.entry.get()

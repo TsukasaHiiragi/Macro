@@ -182,7 +182,7 @@ class Capture(tk.Frame):
                 json.dump(sym,f,cls=SymbolEncoder,indent=2)
 
 def capture():
-    root = tk.Tk()
+    root = tk.Toplevel()
     app = Capture(master=root)
     app.mainloop()
 
@@ -280,7 +280,7 @@ class MergeSymbol(tk.Frame):
         messagebox.showinfo("success","Or-merge successfully finished")
 
 def merge_symbol():
-    root = tk.Tk()
+    root = tk.Toplevel()
     app = MergeSymbol(master=root)
     app.mainloop()
 
@@ -293,4 +293,4 @@ def main():
     print(sym.region)
 
 if __name__=="__main__":
-    merge_symbol()
+    capture()
