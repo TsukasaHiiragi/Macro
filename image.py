@@ -171,63 +171,46 @@ class Capture(tk.Frame):
                   self.end_x,
                   self.end_y)
         img_crop = self.img.crop(region)
-        img_crop.show()
-        filename = gui.entry('filename')
+        # img_crop.show()
+        dict = {'filename':None}
+        gui.entry(dict)
+        filename = dict['filename']
         if filename:
             img_crop.save(os.path.join("work","img",f"{filename}.png"))
             sym = LeafSymbol(f"{filename}.png",region)
             with open(os.path.join("work",f"{filename}.sym.json"),'xt') as f:
                 json.dump(sym,f,cls=SymbolEncoder,indent=2)
 
+def capture():
+    root = tk.Tk()
+    app = Capture(master=root)
+    app.mainloop()
+
 class MergeSymbol(tk.Frame):
     def __init__(self, master=None):
         super().__init__(master)
 
-        # Frame1の作成
         frame1 = tk.Frame(self.master)
         frame1.grid(row=0, column=1, sticky=tk.E)
 
-        # 「フォルダ参照」ラベルの作成
-        label1 = tk.Label(frame1, text="Symbol1>>")
-        label1.pack(side=tk.LEFT)
+        self.fd1 = gui.FileDialog(frame1, text="Symbol1>>", ext="*.sym.json", dir="work")
+        self.fd1.pack()
 
-        # 「フォルダ参照」エントリーの作成
-        self.entry1 = tk.Entry(frame1, width=30)
-        self.entry1.pack(side=tk.LEFT)
-
-        # 「フォルダ参照」ボタンの作成
-        button1 = tk.Button(frame1, text="search...", command=self.filedialog1)
-        button1.pack(side=tk.LEFT)
-
-        # Frame2の作成
         frame2 = tk.Frame(self.master)
         frame2.grid(row=2, column=1, sticky=tk.E)
 
-        # 「ファイル参照」ラベルの作成
-        label2 = tk.Label(frame2, text="Symbol2>>")
-        label2.pack(side=tk.LEFT)
+        self.fd2 = gui.FileDialog(frame2, text="Symbol2>>", ext="*.sym.json", dir="work")
+        self.fd2.pack()
 
-        # 「ファイル参照」エントリーの作成
-        self.entry2 = tk.Entry(frame2, width=30)
-        self.entry2.pack(side=tk.LEFT)
-
-        # 「ファイル参照」ボタンの作成
-        button2 = tk.Button(frame2, text="search...", command=self.filedialog2)
-        button2.pack(side=tk.LEFT)
-
-        # Frame2の作成
         frame3 = tk.Frame(self.master)
         frame3.grid(row=4, column=1, sticky=tk.E)
 
-        # 「ファイル参照」ラベルの作成
         label3 = tk.Label(frame3, text="Symbol3>>")
         label3.pack(side=tk.LEFT)
 
-        # 「ファイル参照」エントリーの作成
         self.entry3 = tk.Entry(frame3, width=30)
         self.entry3.pack(side=tk.LEFT)
 
-        # Frame3の作成
         frame4 = tk.Frame(self.master)
         frame4.grid(row=5,column=1,sticky=tk.W)
 
@@ -240,28 +223,12 @@ class MergeSymbol(tk.Frame):
         button_canncel = tk.Button(frame4, text=("Canncel"), command=quit)
         button_canncel.pack(fill = "x", padx=30, side = "left")    
 
-    def filedialog1(self):
-        fTyp = [("", "*.sym.json")]
-        iFile = os.path.abspath(os.path.dirname(__file__))
-        iFile = os.path.join(iFile,"work")
-        iFilePath = filedialog.askopenfilename(filetype=fTyp, initialdir=iFile)
-        self.entry1.delete(0,'end')
-        self.entry1.insert(0,iFilePath)
-
-    def filedialog2(self):
-        fTyp = [("", "*.sym.json")]
-        iFile = os.path.abspath(os.path.dirname(__file__))
-        iFile = os.path.join(iFile,"work")
-        iFilePath = filedialog.askopenfilename(filetype=fTyp, initialdir=iFile)
-        self.entry2.delete(0,'end')
-        self.entry2.insert(0,iFilePath)
-
     def and_symbol(self):
-        path1 = self.entry1.get()
+        path1 = self.fd1.get()
         if not os.path.exists(path1):
             messagebox.showerror("error", "Invalid file path for Symbol1")
             return
-        path2 = self.entry2.get()
+        path2 = self.fd2.get()
         if not os.path.exists(path2):
             messagebox.showerror("error", "Invalid file path for Symbol2")
             return
@@ -278,18 +245,18 @@ class MergeSymbol(tk.Frame):
         with open(os.path.join("work",f"{path3}.sym.json"),'xt') as f:
             json.dump(sym3,f,cls=SymbolEncoder,indent=2) 
 
-        self.entry1.delete(0,'end')
-        self.entry2.delete(0,'end')
+        self.fd1.set("")
+        self.fd2.set("")
         self.entry3.delete(0,'end')
 
         messagebox.showinfo("success","And-merge successfully finished")  
 
     def or_symbol(self):
-        path1 = self.entry1.get()
+        path1 = self.fd1.get()
         if not os.path.exists(path1):
             messagebox.showerror("error", "Invalid file path for Symbol1")
             return
-        path2 = self.entry2.get()
+        path2 = self.fd2.get()
         if not os.path.exists(path2):
             messagebox.showerror("error", "Invalid file path for Symbol2")
             return
@@ -306,19 +273,18 @@ class MergeSymbol(tk.Frame):
         with open(os.path.join("work",f"{path3}.sym.json"),'xt') as f:
             json.dump(sym3,f,cls=SymbolEncoder,indent=2)
         
-        self.entry1.delete(0,'end')
-        self.entry2.delete(0,'end')
+        self.fd1.set("")
+        self.fd2.set("")
         self.entry3.delete(0,'end')
 
         messagebox.showinfo("success","Or-merge successfully finished")
 
-
-def main():
+def merge_symbol():
     root = tk.Tk()
-    app = Capture(master=root)
+    app = MergeSymbol(master=root)
     app.mainloop()
 
-def main2():
+def main():
     with open(os.path.join("work","gui.sym.json"),'rt') as f:
         sym = json.load(f,cls=SymbolDecoder)
 
@@ -326,10 +292,5 @@ def main2():
     print(sym.image_path)
     print(sym.region)
 
-def main3():
-    root = tk.Tk()
-    app = MergeSymbol(master=root)
-    app.mainloop()
-
 if __name__=="__main__":
-    main3()
+    merge_symbol()
