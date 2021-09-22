@@ -35,12 +35,14 @@ class Entry(tk.Frame):
 
         button2 = tk.Button(frame2, text='Cancel', command=self.master.destroy)
         button2.pack(side=tk.LEFT)
-
     
     def getstr(self):
         for key in self.dict.keys():
             self.dict[key] = self.entry[key].get()
         self.master.destroy()
+
+    def destroy(self):
+        self.master.quit()
   
 def entry(dict):
     root = tk.Toplevel()

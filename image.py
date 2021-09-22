@@ -1,5 +1,6 @@
 import json
 import os
+import threading
 import tkinter as tk
 from tkinter import messagebox,filedialog
 from PIL import Image,ImageTk
@@ -166,20 +167,22 @@ class Capture(tk.Frame):
         ]
 
     def crop_image(self):
-        region = (self.start_x,
-                  self.start_y,
-                  self.end_x,
-                  self.end_y)
-        img_crop = self.img.crop(region)
-        # img_crop.show()
         dict = {'filename':None}
         gui.entry(dict)
-        filename = dict['filename']
-        if filename:
-            img_crop.save(os.path.join("work","img",f"{filename}.png"))
-            sym = LeafSymbol(f"{filename}.png",region)
-            with open(os.path.join("work",f"{filename}.sym.json"),'xt') as f:
+        self.filename = dict['filename']
+        if self.filename:
+            region = (self.start_x,
+                    self.start_y,
+                    self.end_x,
+                    self.end_y)
+            img_crop = self.img.crop(region)
+            img_crop.save(os.path.join("work","img",f"{self.filename}.png"))
+            sym = LeafSymbol(f"{self.filename}.png",region)
+            with open(os.path.join("work",f"{self.filename}.sym.json"),'xt') as f:
                 json.dump(sym,f,cls=SymbolEncoder,indent=2)
+
+    def destroy(self):
+        self.master.quit()
 
 def capture():
     root = tk.Toplevel()
@@ -279,6 +282,9 @@ class MergeSymbol(tk.Frame):
 
         messagebox.showinfo("success","Or-merge successfully finished")
 
+    def destroy(self):
+        self.master.quit()
+
 def merge_symbol():
     root = tk.Toplevel()
     app = MergeSymbol(master=root)
@@ -293,4 +299,6 @@ def main():
     print(sym.region)
 
 if __name__=="__main__":
-    capture()
+    root = tk.Tk()
+    app = Capture(master=root)
+    app.mainloop()
