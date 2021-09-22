@@ -12,6 +12,12 @@ import gui
 class DefState(tk.Frame):
     def __init__(self, master=None):
         super().__init__(master)
+        self.master.focus_set()
+        w = self.winfo_screenwidth()
+        h = self.winfo_screenheight()
+        w = w - 600
+        h = h - 300
+        self.master.geometry("+"+str(w)+"+"+str(h))
 
         frame1 = tk.Frame(self.master)
         frame1.pack()
@@ -46,6 +52,9 @@ class DefState(tk.Frame):
         button3 = tk.Button(frame4, text="save", command=self.save)
         button3.pack(side=tk.LEFT)
 
+        button4 = tk.Button(frame4, text="cancel", command=self.master.destroy)
+        button4.pack(side=tk.LEFT)
+
     def save(self):
         symbol_path = self.dialog1.get()
         if not os.path.exists(symbol_path):
@@ -77,6 +86,9 @@ class DefState(tk.Frame):
         if hasattr(symbol,'right'):
             DefState.save_images(symbol.right, path)
         
+    def destroy(self):
+        self.master.quit()
+
 def def_state():
     root = tk.Toplevel()
     app = DefState(master=root)
@@ -85,12 +97,29 @@ def def_state():
 class ControllState(tk.Frame):
     def __init__(self, master=None):
         super().__init__(master)
+        self.master.focus_set()
+        w = self.winfo_screenwidth()
+        h = self.winfo_screenheight()
+        w = w - 400
+        h = h - 300
+        self.master.geometry("+"+str(w)+"+"+str(h))
 
         frame1 = tk.Frame(self.master)
         frame1.pack()
 
         button1 = tk.Button(frame1, text="Define State", command=def_state)
         button1.pack(side=tk.LEFT)
+
+        button2 = tk.Button(frame1, text="clear", command=self.clear)
+        button2.pack(side=tk.LEFT)
+    
+    def clear(self):
+        if messagebox.askyesno("confirm","clear work"):
+            shutil.rmtree("work")
+            os.makedirs(os.path.join("work","img"))
+
+    def destroy(self):
+        self.master.quit()
 
 def controll_state():
     root = tk.Toplevel()

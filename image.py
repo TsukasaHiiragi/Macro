@@ -92,6 +92,12 @@ class Capture(tk.Frame):
     # https://qiita.com/hisakichi95/items/47f6d37e6f425f29c8a8
     def __init__(self, master=None, resize_rate=2):
         super().__init__(master)
+        w = self.winfo_screenwidth()
+        h = self.winfo_screenheight()
+        w = w - 1000
+        h = h - 700
+        self.master.geometry("+"+str(w)+"+"+str(h))
+        self.master.focus_set()
         self.resize_rate = resize_rate
 
         # 表示する画像の取得（スクリーンショット）
@@ -118,12 +124,15 @@ class Capture(tk.Frame):
         self.canvas.bind("<Button1-Motion>", self.rect_drawing)
         self.canvas.bind("<ButtonRelease-1>", self.release_action)
 
-        self.button1 = tk.Button(
-                self.master,
-                text='crop image',
-                command=self.crop_image
-            )
-        self.button1.pack()
+        frame1 = tk.Frame(self.master)
+        frame1.pack()
+
+        self.button1 = tk.Button(frame1,text='crop image(c)',command=self.crop_image)
+        self.button1.pack(side=tk.LEFT)
+
+        self.button2 = tk.Button(frame1,text='cancel(q)',command=self.master.destroy)
+        self.button2.pack(side=tk.LEFT)
+
 
         self.start_x = None
         self.start_y = None
@@ -192,6 +201,12 @@ def capture():
 class MergeSymbol(tk.Frame):
     def __init__(self, master=None):
         super().__init__(master)
+        self.master.focus_set()
+        w = self.winfo_screenwidth()
+        h = self.winfo_screenheight()
+        w = w - 600
+        h = h - 300
+        self.master.geometry("+"+str(w)+"+"+str(h))
 
         frame1 = tk.Frame(self.master)
         frame1.grid(row=0, column=1, sticky=tk.E)
@@ -223,7 +238,7 @@ class MergeSymbol(tk.Frame):
         button_or = tk.Button(frame4, text=("Or"), command=self.or_symbol)
         button_or.pack(fill = "x", padx=30, side = "left")
 
-        button_canncel = tk.Button(frame4, text=("Canncel"), command=quit)
+        button_canncel = tk.Button(frame4, text=("Canncel"), command=self.master.destroy)
         button_canncel.pack(fill = "x", padx=30, side = "left")    
 
     def and_symbol(self):

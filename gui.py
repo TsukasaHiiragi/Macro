@@ -7,11 +7,19 @@ from PIL import Image, ImageTk
 class Entry(tk.Frame):
     def __init__(self, master=None, dict={}):
         super().__init__(master)
+        w = self.winfo_screenwidth()
+        h = self.winfo_screenheight()
+        w = w - 400
+        h = h - 300
+        self.master.geometry("+"+str(w)+"+"+str(h))
+        
         self.dict = dict
         self.entry = {}
 
         self.master.title('Easy Entry')
         self.master.resizable(False, False)
+        self.master.focus_set()
+
         frame1 = tk.Frame(self.master)
         frame1.grid()
 
@@ -20,9 +28,7 @@ class Entry(tk.Frame):
             label.grid(row=i, column=0, sticky=tk.E)
 
             # Entry
-            self.entry[key] = tk.Entry(
-                frame1,
-                width=20)
+            self.entry[key] = tk.Entry(frame1,width=20)
             self.entry[key].grid(row=i, column=1)
         
         frame2 = tk.Frame(frame1)
