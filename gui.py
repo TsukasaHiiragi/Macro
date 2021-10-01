@@ -55,6 +55,43 @@ def entry(dict):
     app = Entry(master=root, dict=dict)
     app.mainloop()
 
+class Select(tk.Frame):
+    def __init__(self, master=None, cand=[]):
+        super().__init__(master)
+        w = self.winfo_screenwidth()
+        h = self.winfo_screenheight()
+        w = w - 400
+        h = h - 300
+        self.master.geometry("+"+str(w)+"+"+str(h))
+        
+        self.cand = cand
+        
+        self.master.title('Select')
+        self.master.resizable(False, False)
+        self.master.focus_set()
+
+        frame = tk.Frame(self.master)
+        frame.pack()
+
+        lf = tk.LabelFrame(frame, text='Options')
+
+        self.v = tk.StringVar()
+        for value in cand:
+            rb1 = tk.Radiobutton(lf, text=value, value=value, variable=self.v) 
+            rb1.pack()
+        
+        button = tk.Button(frame, text='OK', command=self.destroy)
+        button.pack()
+    
+    def destroy(self):
+        self.master.quit()
+  
+def select(cand):
+    root = tk.Toplevel()
+    app = Select(master=root, cand=cand)
+    app.mainloop()
+    return app.v.get()
+
 class FileDialog(tk.Frame):
     def __init__(self, master=None, text="", default="", dir="", ext="*"):
         super().__init__(master)

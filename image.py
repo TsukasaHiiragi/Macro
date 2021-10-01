@@ -23,9 +23,12 @@ class LeafSymbol:
 
     def search(self):
         try:
-            return pyautogui.locateOnScreen(self.image_path,region=self.region)
+            return pyautogui.locateOnScreen(self.image_path,region=LeafSymbol.add_space(self.region),confidence=0.5)
         except ImageNotFoundException:
             return None
+
+    def add_space(region):
+        return region[0]-10,region[1]-10,region[2]+10,region[3]+10
 
 class AndSymbol:
     def __init__(self,left,right):
@@ -127,10 +130,10 @@ class Capture(tk.Frame):
         frame1 = tk.Frame(self.master)
         frame1.pack()
 
-        self.button1 = tk.Button(frame1,text='crop image(c)',command=self.crop_image)
+        self.button1 = tk.Button(frame1,text='crop image',command=self.crop_image)
         self.button1.pack(side=tk.LEFT)
 
-        self.button2 = tk.Button(frame1,text='cancel(q)',command=self.master.destroy)
+        self.button2 = tk.Button(frame1,text='cancel',command=self.master.destroy)
         self.button2.pack(side=tk.LEFT)
 
 
@@ -138,6 +141,8 @@ class Capture(tk.Frame):
         self.start_y = None
         self.end_x = None
         self.end_x = None
+        self.region = None
+        self.img_crop = None
 
     # ドラッグ開始した時のイベント - - - - - - - - - - - - - - - - - - - - - - - - - - 
     def start_point_get(self,event):
@@ -176,19 +181,14 @@ class Capture(tk.Frame):
         ]
 
     def crop_image(self):
-        dict = {'filename':None}
-        gui.entry(dict)
-        self.filename = dict['filename']
-        if self.filename:
-            region = (self.start_x,
-                    self.start_y,
-                    self.end_x,
-                    self.end_y)
-            img_crop = self.img.crop(region)
-            img_crop.save(os.path.join("work","img",f"{self.filename}.png"))
-            sym = LeafSymbol(f"{self.filename}.png",region)
-            with open(os.path.join("work",f"{self.filename}.sym.json"),'xt') as f:
-                json.dump(sym,f,cls=SymbolEncoder,indent=2)
+        self.region = (
+                self.start_x,
+                self.start_y,
+                self.end_x,
+                self.end_y
+            )
+        self.img_crop = self.img.crop(self.region)
+        self.master.destroy()
 
     def destroy(self):
         self.master.quit()

@@ -9,6 +9,7 @@ from tkinter import messagebox
 import image
 import gui
 
+
 class DefState(tk.Frame):
     def __init__(self, master=None):
         super().__init__(master)
