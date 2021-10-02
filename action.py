@@ -168,6 +168,34 @@ class Monitor:
         self.mouse_listener.join()
         self.keyboard_listener.join()
 
+class KeyInput:
+    def __init__(self, keys):
+        self.keys= keys
+        self.key = None
+        self.keyboard_listener = keyboard.Listener(on_release=self.release)
+
+    def release(self, key):
+        try:
+            name = key.char
+        except AttributeError:
+            name = key.name
+        
+        if name in self.keys:
+            self.key = name
+            return False
+
+    def start(self):
+        self.keyboard_listener.start()
+    
+    def join(self):
+        self.keyboard_listener.join()
+
+def key_input(keys):
+    monitor = KeyInput(keys)
+    monitor.start()
+    monitor.join()
+    return monitor.key
+
 def main():
     monitor = Monitor()
     monitor.start()
