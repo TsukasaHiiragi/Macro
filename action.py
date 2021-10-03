@@ -5,6 +5,8 @@ from time import sleep
 import pyautogui
 from pynput import mouse, keyboard
 
+import log
+
 class Action:
     def __init__(self, actions=[]):
         self.actions = actions
@@ -105,23 +107,24 @@ class ActionDecoder(json.JSONDecoder):
 class Monitor:
     def __init__(self):
         self.lock = threading.Lock()
-        self.action = Action()
-        self.mouse_listener = mouse.Listener(on_click=self.click)
-        self.keyboard_listener = keyboard.Listener(
-                on_press=self.press,
-                on_release=self.release
-            )
+        self.action = Action([])
+
+        log.logger.print(json.dumps(self.action, cls=ActionEncoder, indent=2))
+        
         self.shift = False
         self.hot = None
 
-    def click(self, x, y, button, pressed):
-        if pressed and button.name == 'right':
-            self.keyboard_listener.stop()
-            return False
+        with mouse.Listener(on_click=self.click) as mouse_listener, keyboard.Listener(
+            on_press=self.press,on_release=self.release) as keyboard_listener:
+            keyboard_listener.join()
+            mouse_listener.stop()
+            mouse_listener.join()
 
+    def click(self, x, y, button, pressed):
         if pressed and button.name == 'left':
             self.lock.acquire()
             self.action.append(Click(x,y))
+            log.logger.print(f'click {x} {y}', state='DEBUG')
             self.lock.release()
 
     def press(self, key):
@@ -137,7 +140,6 @@ class Monitor:
 
     def release(self, key):
         if key == keyboard.Key.esc:
-            self.mouse_listener.stop()
             return False
         
         try:
@@ -159,14 +161,6 @@ class Monitor:
         else:
             self.action.append(HotKey(keys))
         self.lock.release()
-
-    def start(self):
-        self.mouse_listener.start()
-        self.keyboard_listener.start()
-    
-    def join(self):
-        self.mouse_listener.join()
-        self.keyboard_listener.join()
 
 class KeyInput:
     def __init__(self, keys):

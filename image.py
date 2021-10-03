@@ -2,6 +2,7 @@ import json
 import os
 import threading
 import tkinter as tk
+import mttkinter as mtk
 from tkinter import messagebox,filedialog
 from PIL import Image,ImageTk
 
@@ -23,7 +24,7 @@ class LeafSymbol:
 
     def search(self):
         try:
-            return pyautogui.locateOnScreen(self.image_path,region=LeafSymbol.add_space(self.region),confidence=0.5)
+            return pyautogui.locateOnScreen(self.image_path,region=LeafSymbol.add_space(self.region))
         except ImageNotFoundException:
             return None
 
