@@ -109,8 +109,6 @@ class Monitor:
         self.lock = threading.Lock()
         self.action = Action([])
 
-        log.logger.print(json.dumps(self.action, cls=ActionEncoder, indent=2))
-        
         self.shift = False
         self.hot = None
 
@@ -181,8 +179,14 @@ class KeyInput:
     def start(self):
         self.keyboard_listener.start()
     
+    def stop(self):
+        self.keyboard_listener.stop()
+    
     def join(self):
         self.keyboard_listener.join()
+
+    def is_alive(self):
+        return self.keyboard_listener.is_alive()
 
 def key_input(keys):
     monitor = KeyInput(keys)

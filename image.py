@@ -1,6 +1,5 @@
 import json
 import os
-import threading
 import tkinter as tk
 import mttkinter as mtk
 from tkinter import messagebox,filedialog
@@ -11,7 +10,20 @@ from pyscreeze import ImageNotFoundException
 
 import gui
 
-class LeafSymbol:
+class Symbol:
+    def __init__(self):
+        pass
+
+    def __and__(self,other):
+        return self
+
+    def __or__(self,other):
+        return self
+
+    def search(self, level=0):
+        return None
+
+class LeafSymbol(Symbol):
     def __init__(self,image_path,region):
         self.image_path = image_path
         self.region = region
@@ -22,19 +34,40 @@ class LeafSymbol:
     def __or__(self,other):
         return OrSymbol(self,other)
 
-    def search(self):
+    def search(self, level=0):
+        if self.image_path is None:
+            return True
+        if level == 0:
+            confidence = 0.8; space = 10
+        elif level == 1:
+            confidence = 0.8; space = 100
+        else:
+            try:
+                return pyautogui.locateOnScreen(
+                    self.image_path,
+                    confidence=0.8)
+            except ImageNotFoundException:
+                return None
         try:
-            return pyautogui.locateOnScreen(self.image_path,region=LeafSymbol.add_space(self.region))
+            return pyautogui.locateOnScreen(
+                self.image_path,
+                region=LeafSymbol.add_space(
+                    self.region, 
+                    space),
+                confidence=confidence)
         except ImageNotFoundException:
             return None
 
-    def add_space(region):
-        return region[0]-10,region[1]-10,region[2]+10,region[3]+10
+    def add_space(region, space=10):
+        return (region[0]-space,
+                region[1]-space,
+                region[2]+space,
+                region[3]+space)
 
-class AndSymbol:
+class AndSymbol(Symbol):
     def __init__(self,left,right):
-        self.left = left
-        self.right = right
+        self.left:Symbol = left
+        self.right:Symbol = right
     
     def __and__(self,other):
         return AndSymbol(self,other)
@@ -42,13 +75,13 @@ class AndSymbol:
     def __or__(self,other):
         return OrSymbol(self,other)
 
-    def search(self):
-        return self.right.search() if self.left.search() else None
+    def search(self, level=0):
+        return self.right.search(level) if self.left.search(level) else None
 
-class OrSymbol:
+class OrSymbol(Symbol):
     def __init__(self,left,right):
-        self.left = left
-        self.right = right
+        self.left:Symbol = left
+        self.right:Symbol = right
 
     def __and__(self,other):
         return AndSymbol(self,other)
@@ -56,9 +89,9 @@ class OrSymbol:
     def __or__(self,other):
         return OrSymbol(self,other)
 
-    def search(self):
-        left = self.left.search()
-        return left if left else self.right.seach()
+    def search(self, level=0):
+        left = self.left.search(level)
+        return left if left else self.right.search(level)
 
 class SymbolEncoder(json.JSONEncoder):
     def default(self, o):

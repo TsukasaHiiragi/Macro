@@ -1,50 +1,46 @@
 import os
 import tkinter as tk
 from tkinter import filedialog
-import pyautogui  
-from PIL import Image, ImageTk
-            
+           
 class Entry(tk.Frame):
-    def __init__(self, master=None, dict={}):
+    def __init__(self, master=None, items=[]):
         super().__init__(master)
-        w = self.winfo_screenwidth()
-        h = self.winfo_screenheight()
-        w = w - 400
-        h = h - 300
-        self.master.geometry("+"+str(w)+"+"+str(h))
+        w,h = 500,100
+        x = self.winfo_screenwidth()-w
+        y = self.winfo_screenheight()-h-50
+        self.master.geometry(f'{w}x{h}+{x}+{y}')
         
-        self.dict = dict
+        self.items = items
         self.entry = {}
+        self.str = {}
 
-        self.master.title('Easy Entry')
+        self.master.title('Entry')
         self.master.resizable(False, False)
         self.master.focus_set()
 
         frame1 = tk.Frame(self.master)
-        frame1.grid()
+        frame1.pack()
 
-        for i, key in enumerate(dict.keys()):
-            label = tk.Label(frame1, text=key)
+        for i, item in enumerate(items):
+            label = tk.Label(frame1, text=item)
             label.grid(row=i, column=0, sticky=tk.E)
 
             # Entry
-            self.entry[key] = tk.Entry(frame1,width=20)
-            self.entry[key].grid(row=i, column=1)
+            self.entry[item] = tk.Entry(frame1,width=20)
+            self.entry[item].grid(row=i, column=1)
         
-        frame2 = tk.Frame(frame1)
-        frame2.grid(row=2, column=1, sticky=tk.W)
+        frame2 = tk.Frame(self.master)
+        frame2.pack()
 
-        button1 = tk.Button(
-                frame2, text='OK', command=self.getstr
-            )
+        button1 = tk.Button(frame2, text='OK', command=self.getstr)
         button1.pack(side=tk.LEFT)
 
         button2 = tk.Button(frame2, text='Cancel', command=self.master.destroy)
         button2.pack(side=tk.LEFT)
-    
+
     def getstr(self):
-        for key in self.dict.keys():
-            self.dict[key] = self.entry[key].get()
+        for item in self.items:
+            self.str[item] = self.entry[item].get()
         self.master.destroy()
 
     def destroy(self):
@@ -93,11 +89,11 @@ def select(cand):
     return app.v.get()
 
 class FileDialog(tk.Frame):
-    def __init__(self, master=None, text="", default="", dir="", ext="*"):
+    def __init__(self, master=None, text="", default="", initdir="", ext="*"):
         super().__init__(master)
         self.ext = ext
         self.default = default
-        self.dir = dir
+        self.initdir = initdir
 
         label = tk.Label(self.master, text=text)
         label.pack(side=tk.LEFT)
@@ -110,13 +106,7 @@ class FileDialog(tk.Frame):
 
     def filedialog(self):
         filetype = [("", self.ext)]
-        if self.default:
-            initdir = self.default
-        else:
-            initdir = os.path.abspath(os.path.dirname(__file__))
-            if self.dir:
-                initdir = os.path.join(initdir, self.dir)
-        filepath = filedialog.askopenfilename(filetype=filetype, initialdir=initdir)
+        filepath = filedialog.askopenfilename(filetype=filetype, initialdir=self.initdir)
         self.entry.delete(0,'end')
         self.entry.insert(0,filepath)
 
@@ -128,10 +118,10 @@ class FileDialog(tk.Frame):
         self.entry.insert(0,text)
 
 class DirDialog(tk.Frame):
-    def __init__(self, master=None, text="", default="", dir=""):
+    def __init__(self, master=None, text="", default="", initdir=""):
         super().__init__(master)
         self.default = default
-        self.dir = dir
+        self.initdir = initdir
 
         label = tk.Label(self.master, text=text)
         label.pack(side=tk.LEFT)
@@ -143,13 +133,7 @@ class DirDialog(tk.Frame):
         button1.pack(side=tk.LEFT)
 
     def dirdialog(self):
-        if self.default:
-            initdir = self.default
-        else:
-            initdir = os.path.abspath(os.path.dirname(__file__))
-            if self.dir:
-                initdir = os.path.join(initdir, self.dir)
-        dirpath = filedialog.askdirectory(initialdir=initdir)
+        dirpath = filedialog.askdirectory(initialdir=self.initdir)
         self.entry.delete(0,'end')
         self.entry.insert(0,dirpath)
 
@@ -159,6 +143,47 @@ class DirDialog(tk.Frame):
     def set(self,text):
         self.entry.delete(0,'end')
         self.entry.insert(0,text)
+
+class DirEntry(tk.Frame):
+    def __init__(self, master=None, items=[], **kwargs):
+        super().__init__(master)
+        w,h = 500,100
+        x = self.winfo_screenwidth()-w
+        y = self.winfo_screenheight()-h-50
+        self.master.geometry(f'{w}x{h}+{x}+{y}')
+        
+        self.items = items
+        self.entry = {}
+        self.str = {}
+
+        self.master.title('FileEntry')
+        self.master.resizable(False, False)
+        self.master.focus_set()
+
+        frame1 = tk.Frame(self.master)
+        frame1.pack()
+
+        for i, item in enumerate(items):
+            # Entry
+            self.entry[item] = DirDialog(frame1, text=item, **kwargs)
+            self.entry[item].pack()
+        
+        frame2 = tk.Frame(self.master)
+        frame2.pack()
+
+        button1 = tk.Button(frame2, text='OK', command=self.getstr)
+        button1.pack(side=tk.LEFT)
+
+        button2 = tk.Button(frame2, text='Cancel', command=self.master.destroy)
+        button2.pack(side=tk.LEFT)
+
+    def getstr(self):
+        for item in self.items:
+            self.str[item] = self.entry[item].get()
+        self.master.destroy()
+
+    def destroy(self):
+        self.master.quit()
 
 # メイン処理 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 if __name__ == "__main__":
