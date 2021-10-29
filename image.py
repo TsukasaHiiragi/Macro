@@ -1,15 +1,52 @@
 import json
 import os
+import time
 import tkinter as tk
-import mttkinter as mtk
-from tkinter import messagebox,filedialog
+import mttkinter
+from tkinter import messagebox
 from PIL import Image,ImageTk
 
+import numpy as np
 import pyautogui
-from pyscreeze import ImageNotFoundException
 
 import gui
+import utility
+import mythread
 
+class Region:
+    def __init__(self, region):
+        self.__position = np.array(region[:2], dtype=np.float)
+        self.__size = np.array(region[2:], dtype=np.float)
+
+    def translation(self, diff):
+        self.__position = self.__position + diff
+
+    def scaling(self, scale, centor):
+        self.__position = centor+(self.__position-centor)*scale
+        self.__size = self.__size*scale
+    
+    def spacing(self, space):
+        self.__position = self.__position-space
+        self.__size = self.__size+2*space
+
+    def region(self):
+        r = (int(self.__position[0]),
+             int(self.__position[1]),
+             int(self.__size[0]),
+             int(self.__size[1]))
+        r = utility.region2rect(r)
+        r = (max(r[0],mythread.rect_max[0]),
+             max(r[1],mythread.rect_max[1]),
+             min(r[2],mythread.rect_max[2]),
+             min(r[3],mythread.rect_max[3]),)
+        r = utility.rect2region(r)
+        return r
+
+    def diff(self, found):
+        pos = np.array(found[:2], dtype=np.float)
+        size = np.array(found[2:], dtype=np.float)
+        return (pos-self.__position)+(size-self.__size)/2
+        
 class Symbol:
     def __init__(self):
         pass
@@ -20,13 +57,37 @@ class Symbol:
     def __or__(self,other):
         return self
 
-    def search(self, level=0):
+    def search(self, hwnd):
         return None
 
+    def default(self):
+        code = {'_type':'Symbol','value':{}}
+        return code
+
+    def load(path):
+        sym_path = os.path.join(utility.path_to_state(),f'{path}.sym.json')
+        if os.path.exists(sym_path):
+            with mythread.mt.disc():
+                with open(sym_path, 'rt') as f:
+                    symbol = json.load(f, cls=SymbolDecoder)
+        else: symbol = None
+        return symbol
+
+    def save(self, path):
+        sym_path = os.path.join(utility.path_to_state(),f'{path}.sym.json')
+        with mythread.mt.disc():
+            with utility.openx(sym_path, 'wt') as f:
+                json.dump(self, f, cls=SymbolEncoder, indent=2)
+
 class LeafSymbol(Symbol):
-    def __init__(self,image_path,region):
+    def __init__(self,image_path,region,accuracy=None):
+        super().__init__()
         self.image_path = image_path
         self.region = region
+        if accuracy: 
+            a,b = accuracy
+            self.accuracy = np.array(a),np.array(b)
+        else: self.accuracy = np.array([0.01,0.01]),np.array([1.,1.])
 
     def __and__(self,other):
         return AndSymbol(self,other)
@@ -34,38 +95,62 @@ class LeafSymbol(Symbol):
     def __or__(self,other):
         return OrSymbol(self,other)
 
-    def search(self, level=0):
+    def search(self, hwnd):
         if self.image_path is None:
             return True
-        if level == 0:
-            confidence = 0.8; space = 10
-        elif level == 1:
-            confidence = 0.8; space = 100
-        else:
-            try:
-                return pyautogui.locateOnScreen(
-                    self.image_path,
-                    confidence=0.8)
-            except ImageNotFoundException:
-                return None
-        try:
-            return pyautogui.locateOnScreen(
-                self.image_path,
-                region=LeafSymbol.add_space(
-                    self.region, 
-                    space),
-                confidence=confidence)
-        except ImageNotFoundException:
-            return None
 
-    def add_space(region, space=10):
-        return (region[0]-space,
-                region[1]-space,
-                region[2]+space,
-                region[3]+space)
+        scale = mythread.mt.local.scale
+        mu,lam = mythread.mt.local.position
+        a,b = self.accuracy
+        eta = a/b
+
+        r = Region(self.region)
+        r.scaling(scale/50, mythread.centor)
+        r.translation(mu)
+        r.spacing(10+3*np.sqrt((1+eta/lam)/eta))
+
+        # mythread.mt.rect(*r.region(), owner=hwnd)
+
+        image = Image.open(self.image_path)
+        size = int(image.width*scale/50),int(image.height*scale/50)
+        image_resized = image.resize(size)
+        
+        with mythread.mt.screen():
+            found = pyautogui.locateOnScreen(
+                image_resized, region=r.region(), confidence=0.8)
+
+        if found:
+            d = r.diff(found)
+            _mu = (mu+(mu+d)*eta/lam)/(1+eta/lam)
+            _lam = lam+eta
+            _a = a+(1+eta/lam)/2
+            _b = b+d**2/2
+            mythread.mt.local.position = _mu,_lam
+            self.accuracy = _a,_b
+            return found
+        return None
+    
+    def capture(self):
+        r = Region(self.region)
+        r.spacing(10)
+        hwnd = mythread.mt.rect(*r.region())
+        img = pyautogui.screenshot(region=self.region)
+        img.save(self.image_path)
+        time.sleep(0.6)
+        mythread.mt.close(hwnd)
+
+    def default(self):
+        code = super().default()
+        code['_type'] = 'LeafSymbol'
+        code['value']['image_path'] = self.image_path
+        code['value']['region'] = self.region
+        a,b = self.accuracy
+        code['value']['accuracy'] = (tuple(a), tuple(b))
+        return code
 
 class AndSymbol(Symbol):
     def __init__(self,left,right):
+        super().__init__()
         self.left:Symbol = left
         self.right:Symbol = right
     
@@ -78,8 +163,16 @@ class AndSymbol(Symbol):
     def search(self, level=0):
         return self.right.search(level) if self.left.search(level) else None
 
+    def default(self):
+        code = super().default()
+        code['_type'] = 'AndSymbol'
+        code['value']['left'] = self.left
+        code['value']['right'] = self.right
+        return code
+    
 class OrSymbol(Symbol):
     def __init__(self,left,right):
+        super().__init__()
         self.left:Symbol = left
         self.right:Symbol = right
 
@@ -93,20 +186,16 @@ class OrSymbol(Symbol):
         left = self.left.search(level)
         return left if left else self.right.search(level)
 
+    def default(self):
+        code = super().default()
+        code['_type'] = 'OrSymbol'
+        code['value']['left'] = self.left
+        code['value']['right'] = self.right
+        return code
+
 class SymbolEncoder(json.JSONEncoder):
     def default(self, o):
-        if isinstance(o, LeafSymbol):
-            return {'_type': 'LeafSymbol', 
-                    'value': {'image_path':o.image_path,
-                              'region':o.region}}
-        if isinstance(o, AndSymbol):
-            return {'_type': 'AndSymbol', 
-                    'value': {'left':o.left,
-                              'right':o.right}}
-        if isinstance(o, OrSymbol):
-            return {'_type': 'OrSymbol', 
-                    'value': {'left':o.left,
-                              'right':o.right}}
+        if isinstance(o, Symbol): return o.default()
         return json.JSONEncoder.default(self, o)
 
 class SymbolDecoder(json.JSONDecoder):
@@ -175,7 +264,7 @@ class Capture(tk.Frame):
         self.start_y = None
         self.end_x = None
         self.end_x = None
-        self.region = None
+        self.rect = None
         self.img_crop = None
 
     # ドラッグ開始した時のイベント - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -215,13 +304,13 @@ class Capture(tk.Frame):
         ]
 
     def crop_image(self):
-        self.region = (
+        self.rect = (
                 self.start_x,
                 self.start_y,
                 self.end_x,
                 self.end_y
             )
-        self.img_crop = self.img.crop(self.region)
+        self.img_crop = self.img.crop(self.rect)
         self.master.destroy()
 
     def destroy(self):
