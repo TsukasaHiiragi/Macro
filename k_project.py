@@ -18,11 +18,14 @@ def quest(id, name, trial, key, members, party_name=None, ability_name=None):
     exe = Executer()
     exe.sys_args['battle\\host.slc.stt.json'] = 'host'
     exe.set_trigger('quest\\result.dmy.stt.json', counter, trial=trial)
+    exe.set_trigger('battle\\request.man.stt.json', cripboard_aquire)
     exe.set_trigger('battle\\request.dmy.stt.json', syncronize, key=key, members=members)
+    exe.set_trigger('battle\\syncronize.dmy.stt.json', syncronize, key=key, members=members)
+    exe.set_trigger('battle\\release.dmy.stt.json', cripboard_release)
     if party_name:
         exe.set_trigger('quest\\partyselect.man.stt.json', party, name=party_name, id=id)
     if ability_name:
-        exe.set_trigger('battle\\ability.dmy.stt.json', ability, name=ability_name, id=id)
+        exe.set_trigger('battle\\ability.dmy.stt.json', ability, name=ability_name, id=id, key=key, members=members)
     exe.run('page\\head.dmy.stt.json', **args)
     with utility.openx(path, 'wt') as f:
         json.dump(exe.usr_args, f, indent=2)
@@ -40,7 +43,13 @@ def counter(usr_args, sys_args, trial):
 def syncronize(usr_args, sys_args, key, members):
     mythread.mt.syncronize(key, members)
 
-def rescue(name, trial, key, n):
+def cripboard_aquire(usr_args, sys_args):
+    mythread.mt.cripboard_aquire()
+
+def cripboard_release(usr_args, sys_args):
+    mythread.mt.cripboard_release()
+
+def rescue(id, name, trial, key, members, party_name=None, ability_name=None):
     path = os.path.join('quest',f'{name}.qst.json')
     if os.path.exists(path):
         with utility.openx(path, 'rt') as f:
@@ -51,7 +60,12 @@ def rescue(name, trial, key, n):
     exe = Executer()
     exe.sys_args['battle\\host.slc.stt.json'] = 'guest'
     exe.sys_args['quest\\count.slc.stt.json'] = 'back'
-    exe.set_trigger('rescue\\id.dmy.stt.json', syncronize, key=key, n=n)
+    exe.set_trigger('rescue\\id.dmy.stt.json', syncronize, key=key, members=members)
+    exe.set_trigger('rescue\\raid.man.stt.json', syncronize, key=key, members=members)
+    if party_name:
+        exe.set_trigger('quest\\partyselect.man.stt.json', party, name=party_name, id=id)
+    if ability_name:
+        exe.set_trigger('battle\\ability.dmy.stt.json', ability, name=ability_name, id=id, key=key, members=members)
     for i in range(trial):
         exe.run('page\\head.dmy.stt.json', **args)
         mythread.mt.text(trial=(i+1,trial))
@@ -81,7 +95,7 @@ def use_ability(name, id, key, members):
         abilities = json.load(f)
 
     exe = Executer()
-    exe.set_trigger('ability\\id.slc.stt.json', syncronize, key=key, n=members)
+    exe.set_trigger('ability\\id.slc.stt.json', syncronize, key=key, members=members)
     exe.sys_args['ability\\id.slc.stt.json'] = f'id{id}'
     path = 'ability\\head.dmy.stt.json' 
     for abi in abilities:
@@ -213,21 +227,23 @@ def preset(usr_args, sys_args):
 if __name__=="__main__":
     q = queue.Queue()
     qs = [None]*6
+    attrs = ['fire','aqua','wind','volt','ray','dark']
+
     for i in range(6):
         qs[i] = queue.Queue()
-
-        qs[i].put(mythread.Function(quest, 'raid\\disa\\st\\fire', 1, f'uuid{i}', 1))
-        qs[i].put(mythread.Function(quest, 'raid\\disa\\st\\aqua', 1, f'uuid{i}', 1))
-        qs[i].put(mythread.Function(quest, 'raid\\disa\\st\\wind', 1, f'uuid{i}', 1))
-        qs[i].put(mythread.Function(quest, 'raid\\disa\\st\\volt', 1, f'uuid{i}', 1))
-        qs[i].put(mythread.Function(quest, 'raid\\disa\\st\\ray', 1, f'uuid{i}', 1))
-        qs[i].put(mythread.Function(quest, 'raid\\disa\\st\\dark', 1, f'uuid{i}', 1))
-        qs[i].put(mythread.Function(quest, 'raid\\disa\\ex\\fire', 1, f'uuid{i}', 1))
-        qs[i].put(mythread.Function(quest, 'raid\\disa\\ex\\aqua', 1, f'uuid{i}', 1))
-        qs[i].put(mythread.Function(quest, 'raid\\disa\\ex\\wind', 1, f'uuid{i}', 1))
-        qs[i].put(mythread.Function(quest, 'raid\\disa\\ex\\volt', 1, f'uuid{i}', 1))
-        qs[i].put(mythread.Function(quest, 'raid\\disa\\ex\\ray', 1, f'uuid{i}', 1))
-        qs[i].put(mythread.Function(quest, 'raid\\disa\\ex\\dark', 1, f'uuid{i}', 1))
+    for i in range(3):
+        for attr in attrs:
+            qs[2*i  ].put(mythread.Function(quest,  2*i+1, f'raid\\catas\\ult\\{attr}', 3, f'uuid{i}', 2, party_name='media2', ability_name='media2_2'))
+            qs[2*i+1].put(mythread.Function(rescue, 2*i+2, f'raid\\catas\\ult\\{attr}', 3, f'uuid{i}', 2, party_name='media2', ability_name='media2_2'))
+    for i in range(3):   
+        for attr in attrs:
+            qs[2*i  ].put(mythread.Function(rescue, 2*i+1, f'raid\\catas\\ult\\{attr}', 3, f'uuid{i}', 2, party_name='media2', ability_name='media2_2'))
+            qs[2*i+1].put(mythread.Function(quest,  2*i+2, f'raid\\catas\\ult\\{attr}', 3, f'uuid{i}', 2, party_name='media2', ability_name='media2_2'))
+    for i in range(6):
+        for attr in attrs:
+            qs[i].put(mythread.Function(quest, f'raid\\disa\\st\\{attr}', 1, f'uuid{i}', 1))
+        for attr in attrs:
+            qs[i].put(mythread.Function(quest, f'raid\\disa\\ex\\{attr}', 1, f'uuid{i}', 1))     
 
     q.put(mythread.Function(set_party, 'aqua\\attack', 2))
     q.put(mythread.Function(set_party, 'volt\\attack', 2))
@@ -243,16 +259,15 @@ if __name__=="__main__":
     q.put(mythread.Function(set_party, 'ray\\deffense', 2))
 
     r = queue.Queue()
-    r.put(mythread.Function(quest, 6, 'event\\raid\\ex', 2, 'uuid', 1, party_name='media2', ability_name='media2'))
+    r.put(mythread.Function(quest, 6, 'raid\\orympia\\rag\\volt', 1, 'uuid', 1))
 
-    qs = [None]*6
-    for i in range(6):
-        qs[i] = queue.Queue()
-        qs[i].put(mythread.Function(quest, i+1, 'event\\raid\\ex', 50, 'uuid', 1, party_name='media2', ability_name='media2'))
-
-    s = queue.Queue()
-    s.put(mythread.Function(init_ability))
-
+    """
+    for i in range(3):
+        qs[2*i  ].put(mythread.Function(quest,  2*i+1, 'event\\raid\\rag', 100, f'uuid{i}', 2, party_name='media2', ability_name='media2_2'))
+        qs[2*i+1].put(mythread.Function(rescue, 2*i+2, 'event\\raid\\rag', 100, f'uuid{i}', 2, party_name='media2', ability_name='media2_2'))
+        qs[2*i  ].put(mythread.Function(rescue, 2*i+1, 'event\\raid\\rag', 100, f'uuid{i}', 2, party_name='media2', ability_name='media2_2'))
+        qs[2*i+1].put(mythread.Function(quest,  2*i+2, 'event\\raid\\rag', 100, f'uuid{i}', 2, party_name='media2', ability_name='media2_2'))
+    """
     mythread.mt = mythread.MyThread(qs=qs)
     # mythread.mt = mythread.MyThread(q=r)
     mythread.mt.start()

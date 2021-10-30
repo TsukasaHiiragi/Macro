@@ -7,7 +7,7 @@ def page():
     names = ['main', 'raid', 'rescue', 'item', 'attr', 'epic', 'advent', 
              'acce', 'guild', 'battlefield', 'event', 'challenge']
     a.dmy('head').connect(a.brn('head'))
-    a.brn('head').connect(a.slc('potal'), *[a.slc(name) for name in names])
+    a.brn('head').connect(a.slc('potal'), *[a.slc(name) for name in names], exception=a.man('default'))
     a.slc('potal').connect('page', **{name:a.man(f'potal\\{name}') for name in names})
     for name in names:
         a.man(f'potal\\{name}').connect(a.brn('head'))
@@ -139,17 +139,17 @@ def quest():
     a.man('red').connect(a.brn('head'))
     a.man('blue').connect(a.brn('head'))    
     a.man('surpport').connect(a.brn('surpport'))
-    a.brn('surpport').connect(a.man('partyselect'))
+    a.brn('surpport').connect(a.man('partyselect'), a.man('surpport'))
     a.man('partyselect').connect(a.brn('partyselect'))
     a.brn('partyselect').connect(DummyState.open('battle\\head'), a.man('partyselect'))
 
     a.dmy('result').connect(a.brn('result'))
     a.brn('result').connect(
-        a.man('mvp'), a.man('rankup'), a.man('aquire'), a.man('encount'), a.slc('count'))
+        a.man('mvp'), a.man('rankup'), a.man('encount'), a.man('aquire'), a.slc('count'))
     a.man('mvp').connect(a.brn('result'))
     a.man('rankup').connect(a.brn('result'))
     a.man('aquire').connect(a.brn('result'))
-    a.man('encount').connect(DummyState.open('page\\head'))
+    a.man('encount').connect(a.brn('result'))
     a.slc('count').connect(
         a.slc('count').path(), retry=a.man('retry'), finish=a.man('finish'), back=a.man('back'))
     a.man('retry').connect(a.brn('head'))
@@ -170,9 +170,11 @@ def battle():
     a.slc('host').connect(a.slc('host').path(), host=a.slc('team'), guest=a.dmy('ability'))
     a.slc('team').connect('team', solo=a.dmy('ability'), multi=a.man('multi'))
     a.man('multi').connect(a.brn('multi'))
-    a.brn('multi').connect(a.man('request'))
+    a.brn('multi').connect(a.man('request'), exception=a.man('multi'))
     a.man('request').connect(a.dmy('request'))
-    a.dmy('request').connect(a.dmy('ability'))
+    a.dmy('request').connect(a.dmy('syncronize'))
+    a.dmy('syncronize').connect(a.dmy('release'))
+    a.dmy('release').connect(a.dmy('ability'))
     a.dmy('ability').connect(a.brn('auto'))
     autos = ['manual', 'auto', 'ability']
     a.brn('auto').connect(*[a.slc(f'auto\\{auto}') for auto in autos])

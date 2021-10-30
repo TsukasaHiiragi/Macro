@@ -41,6 +41,7 @@ class MyThread:
         self.__screen_lock = threading.Lock()
         self.__mouse_lock = threading.Lock()
         self.__disc_lock = threading.Lock()
+        self.__cripboard_lock = threading.Lock()
         self.__sync_lock = threading.Lock()
         self.__sync:dict[str,Syncronize] = {}
         self.__display = display.Display()
@@ -84,6 +85,12 @@ class MyThread:
 
     def disc(self):
         return LockX(self.__disc_lock)
+
+    def cripboard_aquire(self):
+        self.__cripboard_lock.acquire()
+
+    def cripboard_release(self):
+        self.__cripboard_lock.release()
 
     def empty(self, owner=None):
         if owner is None: owner = self.root
