@@ -60,14 +60,14 @@ def init_ability():
     exe = Executer()
     exe.run('ability\\head.dmy.stt.json', chara='chara1')
 
-def ability(usr_args, sys_args, name, id):
+def ability(usr_args, sys_args, name, id, key, members):
     dir = os.path.join('C:\\Users\\tsuka\\Macro\\ability',f'{id}',name)
     if os.path.exists(os.path.join(dir,'ability.abi.json')):
-        use_ability(name, id)
+        use_ability(name, id, key, members)
     else:
         set_abi(name, id)
 
-def use_ability(name, id):
+def use_ability(name, id, key, members):
     dir = os.path.join('C:\\Users\\tsuka\\Macro\\ability',f'{id}',name)
     symbol:image.LeafSymbol = image.Symbol.load(f'ability\\id{id}\\list')
     symbol.image_path = os.path.join(dir,'img','list.png')
@@ -81,6 +81,7 @@ def use_ability(name, id):
         abilities = json.load(f)
 
     exe = Executer()
+    exe.set_trigger('ability\\id.slc.stt.json', syncronize, key=key, n=members)
     exe.sys_args['ability\\id.slc.stt.json'] = f'id{id}'
     path = 'ability\\head.dmy.stt.json' 
     for abi in abilities:
