@@ -227,23 +227,24 @@ def preset(usr_args, sys_args):
 if __name__=="__main__":
     q = queue.Queue()
     qs = [None]*6
-    attrs = ['fire','aqua','wind','volt','ray','dark']
 
     for i in range(6):
         qs[i] = queue.Queue()
+    attrs = ['aqua','wind','volt','ray','dark']
     for i in range(3):
         for attr in attrs:
             qs[2*i  ].put(mythread.Function(quest,  2*i+1, f'raid\\catas\\ult\\{attr}', 3, f'uuid{i}', 2, party_name='media2', ability_name='media2_2'))
             qs[2*i+1].put(mythread.Function(rescue, 2*i+2, f'raid\\catas\\ult\\{attr}', 3, f'uuid{i}', 2, party_name='media2', ability_name='media2_2'))
+    attrs = ['fire','aqua','wind','volt','ray','dark']
     for i in range(3):   
         for attr in attrs:
             qs[2*i  ].put(mythread.Function(rescue, 2*i+1, f'raid\\catas\\ult\\{attr}', 3, f'uuid{i}', 2, party_name='media2', ability_name='media2_2'))
             qs[2*i+1].put(mythread.Function(quest,  2*i+2, f'raid\\catas\\ult\\{attr}', 3, f'uuid{i}', 2, party_name='media2', ability_name='media2_2'))
     for i in range(6):
         for attr in attrs:
-            qs[i].put(mythread.Function(quest, f'raid\\disa\\st\\{attr}', 1, f'uuid{i}', 1))
+            qs[i].put(mythread.Function(quest, i+1, f'raid\\disa\\st\\{attr}', 1, f'uuid{i}', 1))
         for attr in attrs:
-            qs[i].put(mythread.Function(quest, f'raid\\disa\\ex\\{attr}', 1, f'uuid{i}', 1))     
+            qs[i].put(mythread.Function(quest, i+1, f'raid\\disa\\ex\\{attr}', 1, f'uuid{i}', 1))     
 
     q.put(mythread.Function(set_party, 'aqua\\attack', 2))
     q.put(mythread.Function(set_party, 'volt\\attack', 2))
