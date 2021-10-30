@@ -114,7 +114,7 @@ class Scroll(Action):
             pyautogui.moveTo(x,y)
             pyautogui.scroll(self.amount)
         if self.interval: sleep(self.interval[1])
-        else: sleep(1.2)
+        else: sleep(1.8)
 
     def default(self):
         code = super().default()
@@ -136,7 +136,7 @@ class Press(Action):
         if self.interval:
             sleep(self.interval)
         else:
-            sleep(1.2)
+            sleep(1.8)
 
     def default(self):
         code = super().default()

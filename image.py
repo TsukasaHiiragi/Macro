@@ -107,7 +107,7 @@ class LeafSymbol(Symbol):
         r = Region(self.region)
         r.scaling(scale/50, mythread.centor)
         r.translation(mu)
-        r.spacing(10+3*np.sqrt((1+eta/lam)/eta))
+        r.spacing(15+3*np.sqrt((1+eta/lam)/eta))
 
         # mythread.mt.rect(*r.region(), owner=hwnd)
 

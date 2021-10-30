@@ -8,7 +8,7 @@ import utility
 import action
 import image
 
-def quest(name, trial, key, n):
+def quest(id, name, trial, key, members, party_name=None, ability_name=None):
     path = os.path.join('quest',f'{name}.qst.json')
     if os.path.exists(path):
         with utility.openx(path, 'rt') as f:
@@ -18,7 +18,11 @@ def quest(name, trial, key, n):
     exe = Executer()
     exe.sys_args['battle\\host.slc.stt.json'] = 'host'
     exe.set_trigger('quest\\result.dmy.stt.json', counter, trial=trial)
-    exe.set_trigger('battle\\request.dmy.stt.json', syncronize, key=key, n=n)
+    exe.set_trigger('battle\\request.dmy.stt.json', syncronize, key=key, members=members)
+    if party_name:
+        exe.set_trigger('quest\\partyselect.man.stt.json', party, name=party_name, id=id)
+    if ability_name:
+        exe.set_trigger('battle\\ability.dmy.stt.json', ability, name=ability_name, id=id)
     exe.run('page\\head.dmy.stt.json', **args)
     with utility.openx(path, 'wt') as f:
         json.dump(exe.usr_args, f, indent=2)
@@ -33,8 +37,8 @@ def counter(usr_args, sys_args, trial):
     else:
         sys_args['quest\\count.slc.stt.json'] = 'retry'
 
-def syncronize(usr_args, sys_args, key, n):
-    mythread.mt.syncronize(key, n)
+def syncronize(usr_args, sys_args, key, members):
+    mythread.mt.syncronize(key, members)
 
 def rescue(name, trial, key, n):
     path = os.path.join('quest',f'{name}.qst.json')
@@ -52,27 +56,39 @@ def rescue(name, trial, key, n):
         exe.run('page\\head.dmy.stt.json', **args)
         mythread.mt.text(trial=(i+1,trial))
 
-def ability(name, id):
-    dir = os.path.join('C:\\Users\\miyas\\Macro\\ability',f'{id}',name)
-    symbol:image.LeafSymbol = image.Symbol.load('ability\\list')
+def init_ability():
+    exe = Executer()
+    exe.run('ability\\head.dmy.stt.json', chara='chara1')
+
+def ability(usr_args, sys_args, name, id):
+    dir = os.path.join('C:\\Users\\tsuka\\Macro\\ability',f'{id}',name)
+    if os.path.exists(os.path.join(dir,'ability.abi.json')):
+        use_ability(name, id)
+    else:
+        set_abi(name, id)
+
+def use_ability(name, id):
+    dir = os.path.join('C:\\Users\\tsuka\\Macro\\ability',f'{id}',name)
+    symbol:image.LeafSymbol = image.Symbol.load(f'ability\\id{id}\\list')
     symbol.image_path = os.path.join(dir,'img','list.png')
-    symbol.save('ability\\list')
+    symbol.save(f'ability\\id{id}\\list')
     charas = ['chara1','chara2','chara3','chara4','chara5']
     for chara in charas:
-        symbol:image.LeafSymbol = image.Symbol.load(f'ability\\scroll\\{chara}')
+        symbol:image.LeafSymbol = image.Symbol.load(f'ability\\id{id}\\scroll\\{chara}')
         symbol.image_path = os.path.join(dir,'img',f'{chara}.png')
-        symbol.save(f'ability\\scroll\\{chara}')
+        symbol.save(f'ability\\id{id}\\scroll\\{chara}')
     with utility.openx(os.path.join(dir,'ability.abi.json'), 'rt') as f:
         abilities = json.load(f)
 
     exe = Executer()
+    exe.sys_args['ability\\id.slc.stt.json'] = f'id{id}'
     path = 'ability\\head.dmy.stt.json' 
     for abi in abilities:
         exe.run(path, **abi)
-        path = f'ability\\scroll\\{abi["chara"]}.slc.stt.json'
+        path = f'ability\\id{id}\\scroll\\{abi["chara"]}.slc.stt.json'
 
 def set_abi(name, id):
-    dir = os.path.join('C:\\Users\\miyas\\Macro\\ability',f'{id}',name)
+    dir = os.path.join('C:\\Users\\tsuka\\Macro\\ability',f'{id}',name)
     with utility.openx(os.path.join(dir,'img','list.png'), 'wt') as f:
         pass
     symbol:image.LeafSymbol = image.Symbol.load('set_abi\\list')
@@ -96,7 +112,7 @@ def ability_command(usr_args, sys_args):
     charas = ['chara1','chara2','chara3','chara4','chara5']
     abilities = {'q':'ability1','w':'ability2','a':'ability3','s':'ability4',}
     cur = charas.index(usr_args['chara'])
-    mythread.mt.print('ability_command', state='KEYWORD', end='')
+    mythread.mt.print('ability_command ', state='KEYWORD', end='')
     mythread.mt.print('input command', state='INPUT')
     mythread.mt.print('esc, up, down, q, w, a, s, 1, 2, 3, 4, 5', state='KEY')
     key = action.key_input(['esc','up','down','q','w','a','s','1','2','3','4','5'])
@@ -124,20 +140,33 @@ def ability_command(usr_args, sys_args):
         sys_args['set_abi\\command.slc.stt.json'] = 'target'
         usr_args['target'] = 'chara'+key
 
-def party(name, id):
+def init_party():
+    exe = Executer()
+    exe.run('party\\head.dmy.stt.json')
+
+def party(usr_args, sys_args, name, id):
+    dir = os.path.join('C:\\Users\\tsuka\\Macro\\party',f'{id}',name)
+    if os.path.exists(os.path.join(dir,'party.pty.json')):
+        use_party(name, id)
+    else:
+        set_party(name, id)
+
+def use_party(name, id):
     mythread.mt.print(name, state='KEYWORD')
-    dir = os.path.join('C:\\Users\\miyas\\Macro\\party',f'{id}',name)
-    symbol:image.LeafSymbol = image.Symbol.load(f'party\\party')
+    dir = os.path.join('C:\\Users\\tsuka\\Macro\\party',f'{id}',name)
+    symbol:image.LeafSymbol = image.Symbol.load(f'party\\id{id}\\party')
     symbol.image_path = os.path.join(dir,'party.png')
-    symbol.save(f'party\\party')
+    symbol.save(f'party\\id{id}\\party')
     with utility.openx(os.path.join(dir,'party.pty.json'), 'rt') as f:
         party = json.load(f)
     exe = Executer()
+    exe.sys_args['party\\check1.slc.stt.json'] = f'id{id}'
+    exe.sys_args['party\\check2.slc.stt.json'] = f'id{id}'
     exe.run('party\\head.dmy.stt.json', **party)
 
 def set_party(name, id):
     mythread.mt.print(name, state='KEYWORD')
-    dir = os.path.join('C:\\Users\\miyas\\Macro\\party',f'{id}',name)
+    dir = os.path.join('C:\\Users\\tsuka\\Macro\\party',f'{id}',name)
     with utility.openx(os.path.join(dir,'party.png'), 'wt') as f:
         pass
     symbol:image.LeafSymbol = image.Symbol.load(f'set_party\\party')
@@ -182,18 +211,22 @@ def preset(usr_args, sys_args):
 
 if __name__=="__main__":
     q = queue.Queue()
-    q1 = queue.Queue()
-    q2 = queue.Queue()
-    q3 = queue.Queue()
-    q4 = queue.Queue()
-    q5 = queue.Queue()
-    q6 = queue.Queue()
-    q1.put(mythread.Function(quest, 'event\\advent\\rag', 25, 'uuid', 1))
-    q2.put(mythread.Function(quest, 'event\\advent\\rag', 25, 'uuid', 1))
-    q3.put(mythread.Function(quest, 'event\\advent\\rag', 25, 'uuid', 1))
-    q4.put(mythread.Function(quest, 'event\\advent\\rag', 25, 'uuid', 1))
-    q5.put(mythread.Function(quest, 'event\\advent\\rag', 25, 'uuid', 1))
-    q6.put(mythread.Function(quest, 'event\\advent\\rag', 25, 'uuid', 1))
+    qs = [None]*6
+    for i in range(6):
+        qs[i] = queue.Queue()
+
+        qs[i].put(mythread.Function(quest, 'raid\\disa\\st\\fire', 1, f'uuid{i}', 1))
+        qs[i].put(mythread.Function(quest, 'raid\\disa\\st\\aqua', 1, f'uuid{i}', 1))
+        qs[i].put(mythread.Function(quest, 'raid\\disa\\st\\wind', 1, f'uuid{i}', 1))
+        qs[i].put(mythread.Function(quest, 'raid\\disa\\st\\volt', 1, f'uuid{i}', 1))
+        qs[i].put(mythread.Function(quest, 'raid\\disa\\st\\ray', 1, f'uuid{i}', 1))
+        qs[i].put(mythread.Function(quest, 'raid\\disa\\st\\dark', 1, f'uuid{i}', 1))
+        qs[i].put(mythread.Function(quest, 'raid\\disa\\ex\\fire', 1, f'uuid{i}', 1))
+        qs[i].put(mythread.Function(quest, 'raid\\disa\\ex\\aqua', 1, f'uuid{i}', 1))
+        qs[i].put(mythread.Function(quest, 'raid\\disa\\ex\\wind', 1, f'uuid{i}', 1))
+        qs[i].put(mythread.Function(quest, 'raid\\disa\\ex\\volt', 1, f'uuid{i}', 1))
+        qs[i].put(mythread.Function(quest, 'raid\\disa\\ex\\ray', 1, f'uuid{i}', 1))
+        qs[i].put(mythread.Function(quest, 'raid\\disa\\ex\\dark', 1, f'uuid{i}', 1))
 
     q.put(mythread.Function(set_party, 'aqua\\attack', 2))
     q.put(mythread.Function(set_party, 'volt\\attack', 2))
@@ -209,8 +242,16 @@ if __name__=="__main__":
     q.put(mythread.Function(set_party, 'ray\\deffense', 2))
 
     r = queue.Queue()
-    r.put(mythread.Function(quest, 'item\\exp', 30, 'uuid', 1))
+    r.put(mythread.Function(quest, 6, 'event\\raid\\ex', 2, 'uuid', 1, party_name='media2', ability_name='media2'))
 
-    # mythread.mt = mythread.MyThread(qs=[q1,q2,q3,q4,q5,q6])
-    mythread.mt = mythread.MyThread(q=q)
+    qs = [None]*6
+    for i in range(6):
+        qs[i] = queue.Queue()
+        qs[i].put(mythread.Function(quest, i+1, 'event\\raid\\ex', 50, 'uuid', 1, party_name='media2', ability_name='media2'))
+
+    s = queue.Queue()
+    s.put(mythread.Function(init_ability))
+
+    mythread.mt = mythread.MyThread(qs=qs)
+    # mythread.mt = mythread.MyThread(q=r)
     mythread.mt.start()

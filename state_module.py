@@ -74,6 +74,22 @@ def item():
         a.man(f'position\\{position}').connect(DummyState.open('quest\\head'))
     a.save()
 
+def acce():
+    a = Assister('acce')
+    a.dmy('head').connect(a.slc('attr'))
+    attrs = ['fire','aqua','wind','volt','ray','dark','all']
+    a.slc('attr').connect('attr', **{attr:a.man(f'attr\\{attr}') for attr in attrs})
+    for attr in attrs: a.man(f'attr\\{attr}').connect(a.slc('scroll\\sc1'))
+    a.slc('scroll\\sc1').connect('scroll', sc1=a.slc('position'), sc2=a.man('scroll\\sc2'))
+    a.man('scroll\\sc2').connect(a.slc('scroll\\sc2'))
+    a.slc('scroll\\sc2').connect('scroll', sc2=a.slc('position'))
+    positions = ['pos1','pos2','pos3','pos4']
+    a.slc('position').connect('position', 
+        **{position:a.man(f'position\\{position}') for position in positions})
+    for position in positions: 
+        a.man(f'position\\{position}').connect(DummyState.open('quest\\head'))
+    a.save()
+
 def advent():
     a = Assister('advent')
     a.dmy('head').connect(a.brn('head'))
@@ -100,7 +116,16 @@ def event():
         **{position:a.man(f'position\\{position}') for position in positions})
     for position in positions: 
         a.man(f'position\\{position}').connect(a.slc('type'))
-    a.slc('type').connect('event_type', advent=DummyState.open('advent\\head'))
+    a.slc('type').connect('event_type', advent=DummyState.open('advent\\head'), raid=a.dmy('raid\\head'))
+    a.dmy('raid\\head').connect(a.brn('raid\\head'))
+    a.brn('raid\\head').connect(a.man('raid\\top'))
+    a.man('raid\\top').connect(a.brn('raid\\top'))
+    a.brn('raid\\top').connect(a.man('raid\\tab'))
+    a.man('raid\\tab').connect(a.slc('raid\\position'))
+    a.slc('raid\\position').connect('event_raid_pos', 
+        **{position:a.man(f'raid\\position\\{position}') for position in positions})
+    for position in positions: 
+        a.man(f'raid\\position\\{position}').connect(DummyState.open('quest\\head'))
     a.save()
       
 def quest():
@@ -142,12 +167,13 @@ def quest():
 def battle():
     a = Assister('battle')
     a.dmy('head').connect(a.slc('host'))
-    a.slc('host').connect(a.slc('host').path(), host=a.slc('team'), guest=a.brn('auto'))
-    a.slc('team').connect('team', solo=a.brn('auto'), multi=a.man('multi'))
+    a.slc('host').connect(a.slc('host').path(), host=a.slc('team'), guest=a.dmy('ability'))
+    a.slc('team').connect('team', solo=a.dmy('ability'), multi=a.man('multi'))
     a.man('multi').connect(a.brn('multi'))
     a.brn('multi').connect(a.man('request'))
     a.man('request').connect(a.dmy('request'))
-    a.dmy('request').connect(a.brn('auto'))
+    a.dmy('request').connect(a.dmy('ability'))
+    a.dmy('ability').connect(a.brn('auto'))
     autos = ['manual', 'auto', 'ability']
     a.brn('auto').connect(*[a.slc(f'auto\\{auto}') for auto in autos])
     for auto in autos:
@@ -167,22 +193,25 @@ def battle():
 def ability():
     a = Assister('ability')
     a.dmy('head').connect(a.brn('head'))
-    a.brn('head').connect(a.slc('list'), a.brn('scroll'))   
+    a.brn('head').connect(a.slc('id'))
+    a.slc('id').connect(a.slc('id').path(), **{f'id{i}':a.brn(f'id{i}\\head') for i in range(1,7)})
     charas = ['chara1','chara2','chara3','chara4','chara5']
-    a.slc('list').connect('chara', **{chara:a.man(f'list\\{chara}') for chara in charas})
-    for chara in charas: a.man(f'list\\{chara}').connect(a.brn('head'))
-    a.brn('scroll').connect(*[a.slc(f'scroll\\{chara}') for chara in charas])
-    for i in range(5):
-        a.slc(f'scroll\\chara{i+1}').connect('chara',
-            **{f'chara{(i-2)%5+1}':a.man('scroll\\upper2'),
-               f'chara{(i-1)%5+1}':a.man('scroll\\upper1'),
-               f'chara{i+1}':a.slc(f'chara{i+1}'),
-               f'chara{(i+1)%5+1}':a.man('scroll\\lower1'),
-               f'chara{(i+2)%5+1}':a.man('scroll\\lower2')},)
-    a.man('scroll\\upper2').connect(a.brn('scroll'))
-    a.man('scroll\\upper1').connect(a.brn('scroll'))
-    a.man('scroll\\lower1').connect(a.brn('scroll'))
-    a.man('scroll\\lower2').connect(a.brn('scroll'))
+    for i in range(1,7):
+        a.brn(f'id{i}\\head').connect(a.slc(f'id{i}\\list'), a.brn(f'id{i}\\scroll'))   
+        a.slc(f'id{i}\\list').connect('chara', **{chara:a.man(f'id{i}\\list\\{chara}') for chara in charas})
+        for chara in charas: a.man(f'id{i}\\list\\{chara}').connect(a.brn(f'id{i}\\head'))
+        a.brn(f'id{i}\\scroll').connect(*[a.slc(f'id{i}\\scroll\\{chara}') for chara in charas])
+        for j in range(5):
+            a.slc(f'id{i}\\scroll\\chara{j+1}').connect('chara',
+                **{f'chara{(j-2)%5+1}':a.man(f'id{i}\\scroll\\upper2'),
+                   f'chara{(j-1)%5+1}':a.man(f'id{i}\\scroll\\upper1'),
+                   f'chara{j+1}':      a.slc(f'chara{j+1}'),
+                   f'chara{(j+1)%5+1}':a.man(f'id{i}\\scroll\\lower1'),
+                   f'chara{(j+2)%5+1}':a.man(f'id{i}\\scroll\\lower2')},)
+        a.man(f'id{i}\\scroll\\upper2').connect(a.brn(f'id{i}\\scroll'))
+        a.man(f'id{i}\\scroll\\upper1').connect(a.brn(f'id{i}\\scroll'))
+        a.man(f'id{i}\\scroll\\lower1').connect(a.brn(f'id{i}\\scroll'))
+        a.man(f'id{i}\\scroll\\lower2').connect(a.brn(f'id{i}\\scroll'))
     abis = ['ability1','ability2','ability3','ability4']
     for chara in charas:
         a.slc(chara).connect('ability', **{abi:a.man(f'ability\\{abi}') for abi in abis})
@@ -226,12 +255,16 @@ def set_abi():
 
 def party():
     a = Assister('party')
-    a.dmy('head').connect(a.brn('check1'))
-    a.brn('check1').connect(a.dmy('party'), exception=a.slc('slot'))
+    a.dmy('head').connect(a.slc('check1'))
+    a.slc('check1').connect(a.slc('check1').path(), **{f'id{i}':a.brn(f'check1\\id{i}') for i in range(1,7)})
+    for i in range(1,7):
+        a.brn(f'check1\\id{i}').connect(a.dmy(f'id{i}\\party'), exception=a.slc('slot'))
     a.slc('slot').connect('slot', **{f'slot{i}':a.man(f'slot\\slot{i}') for i in range(1,13)})
     for i in range(1,13):
-        a.man(f'slot\\slot{i}').connect(a.brn('check2'))
-    a.brn('check2').connect(a.dmy('party'), exception=a.man('select'))
+        a.man(f'slot\\slot{i}').connect(a.slc('check2'))
+    a.slc('check2').connect(a.slc('check2').path(), **{f'id{i}':a.brn(f'check2\\id{i}') for i in range(1,7)})
+    for i in range(1,7):
+        a.brn(f'check2\\id{i}').connect(a.dmy(f'id{i}\\party'), exception=a.man('select'))
     a.man('select').connect(a.brn('select'))
     a.brn('select').connect(a.slc('tab'))
     tabs = ['a','b','c','d','e','f']
@@ -244,8 +277,9 @@ def party():
     a.man('call').connect(a.brn('call'))
     a.brn('call').connect(a.man('ok'))
     a.man('ok').connect(a.brn('ok'))
-    a.brn('ok').connect(a.brn('check2'))
-    a.dmy('party').connect(a.dmy('tail'))
+    a.brn('ok').connect(a.slc('check2'))
+    for i in range(1,7):
+        a.dmy(f'id{i}\\party').connect(a.dmy('tail'))
     a.save()
 
 def set_party():
@@ -276,6 +310,7 @@ def tmp():
     rescue()
     attr()
     item()
+    acce()
     advent()
     event()
     quest()
