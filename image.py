@@ -67,7 +67,7 @@ class Symbol:
     def load(path):
         sym_path = os.path.join(utility.path_to_state(),f'{path}.sym.json')
         if os.path.exists(sym_path):
-            with mythread.mt.disc():
+            # with mythread.mt.disc():
                 with open(sym_path, 'rt') as f:
                     symbol = json.load(f, cls=SymbolDecoder)
         else: symbol = None
@@ -115,18 +115,18 @@ class LeafSymbol(Symbol):
         size = int(image.width*scale/50),int(image.height*scale/50)
         image_resized = image.resize(size)
         
-        with mythread.mt.screen():
-            found = pyautogui.locateOnScreen(
-                image_resized, region=r.region(), confidence=0.8)
+        # with mythread.mt.screen():
+        found = pyautogui.locateOnScreen(
+            image_resized, region=r.region(), confidence=0.8)
 
         if found:
             d = r.diff(found)
             _mu = (mu+(mu+d)*eta/lam)/(1+eta/lam)
             _lam = lam+eta
-            _a = a+(1+eta/lam)/2
-            _b = b+d**2/2
+            # _a = a+(1+eta/lam)/2
+            # _b = b+d**2/2
             mythread.mt.local.position = _mu,_lam
-            self.accuracy = _a,_b
+            # self.accuracy = _a,_b
             return found
         return None
     

@@ -174,6 +174,7 @@ class SelectState(State):
             selected = sys_args[self.__key]
         else:
             if self.__key not in usr_args: 
+                # if self.next(): return self.next()
                 usr_args[self.__key] = self.select()
             selected = usr_args[self.__key]
         if selected not in self.__choices:
@@ -278,10 +279,10 @@ class BranchState(State):
         # mythread.mt.close(hwnd)
         self.print(f'recognize {State.strip(path)}', state='DEBUG')
         monitor.stop()
-        hwnd = mythread.mt.rect(*hit)
-        symbol.save(State.strip(path))
-        time.sleep(0.6)
-        mythread.mt.close(hwnd)
+        # hwnd = mythread.mt.rect(*hit)
+        # symbol.save(State.strip(path))
+        # time.sleep(0.3)
+        # mythread.mt.close(hwnd)
         return path
 
     def extend(self, str):

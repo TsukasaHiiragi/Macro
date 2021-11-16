@@ -38,6 +38,7 @@ class Syncronize:
 class MyThread:
     def __init__(self, q=None, qs=None):
         self.local = threading.local()
+        self.glob = {}
         self.__screen_lock = threading.Lock()
         self.__mouse_lock = threading.Lock()
         self.__disc_lock = threading.Lock()
