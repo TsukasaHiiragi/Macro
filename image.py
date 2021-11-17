@@ -131,10 +131,19 @@ class LeafSymbol(Symbol):
         return None
     
     def capture(self):
+        scale = mythread.mt.local.scale
+        mu,lam = mythread.mt.local.position
+        a,b = self.accuracy
+        eta = a/b
+
         r = Region(self.region)
+        r.translation(-mu)
+        r.scaling(50/scale, mythread.centor)
+        img = pyautogui.screenshot(region=r.region())
         r.spacing(10)
         hwnd = mythread.mt.rect(*r.region())
-        img = pyautogui.screenshot(region=self.region)
+        size = int(img.width*50/scale),int(img.height*50/scale)
+        img = img.resize(size)
         img.save(self.image_path)
         time.sleep(0.6)
         mythread.mt.close(hwnd)
@@ -264,7 +273,7 @@ class Capture(tk.Frame):
         self.start_y = None
         self.end_x = None
         self.end_x = None
-        self.rect = None
+        self.region = None
         self.img_crop = None
 
     # ドラッグ開始した時のイベント - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -304,13 +313,24 @@ class Capture(tk.Frame):
         ]
 
     def crop_image(self):
-        self.rect = (
+        rect = (
                 self.start_x,
                 self.start_y,
                 self.end_x,
                 self.end_y
             )
-        self.img_crop = self.img.crop(self.rect)
+        self.img_crop = self.img.crop(rect)
+        
+        scale = mythread.mt.local.scale
+        mu,lam = mythread.mt.local.position
+        
+        r = Region(utility.rect2region(rect))
+        r.translation(-mu)
+        r.scaling(50/scale, mythread.centor)
+        self.region = r.region()
+
+        size = int(self.img_crop.width*50/scale),int(self.img_crop.height*50/scale)
+        self.img_crop = self.img_crop.resize(size)
         self.master.destroy()
 
     def destroy(self):

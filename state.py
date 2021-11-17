@@ -322,7 +322,7 @@ class BranchState(State):
             img_path = f'{img_name}.png'
             app.img_crop.save(img_path)
 
-            symbol = image.LeafSymbol(img_path, utility.rect2region(app.rect))
+            symbol = image.LeafSymbol(img_path, app.region)
         else:
             symbol = image.LeafSymbol(None, None)
         symbol.save(name)

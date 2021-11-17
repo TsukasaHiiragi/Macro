@@ -36,7 +36,7 @@ class Syncronize:
         self.__exit.wait()
         
 class MyThread:
-    def __init__(self, q=None, qs=None):
+    def __init__(self, q=None, qs=None, id=0):
         self.local = threading.local()
         self.glob = {}
         self.__screen_lock = threading.Lock()
@@ -53,7 +53,7 @@ class MyThread:
             self.__logger = log.IOLogFrame(root)
             thread = threading.Thread(
                 target=controller, daemon=True,
-                kwargs={'thread_id':0, 'q':q})
+                kwargs={'thread_id':id, 'q':q})
             thread.start()
         if qs:
             self.__logger = None
