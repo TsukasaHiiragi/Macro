@@ -133,9 +133,7 @@ class LeafSymbol(Symbol):
     def capture(self):
         scale = mythread.mt.local.scale
         mu,lam = mythread.mt.local.position
-        a,b = self.accuracy
-        eta = a/b
-
+        
         r = Region(self.region)
         r.translation(-mu)
         r.scaling(50/scale, mythread.centor)
