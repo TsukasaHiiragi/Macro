@@ -135,8 +135,8 @@ class LeafSymbol(Symbol):
         mu,lam = mythread.mt.local.position
         
         r = Region(self.region)
-        r.translation(-mu)
-        r.scaling(50/scale, mythread.centor)
+        r.scaling(scale/50, mythread.centor)
+        r.translation(mu)
         img = pyautogui.screenshot(region=r.region())
         r.spacing(10)
         hwnd = mythread.mt.rect(*r.region())
@@ -319,16 +319,8 @@ class Capture(tk.Frame):
             )
         self.img_crop = self.img.crop(rect)
         
-        scale = mythread.mt.local.scale
-        mu,lam = mythread.mt.local.position
-        
-        r = Region(utility.rect2region(rect))
-        r.translation(-mu)
-        r.scaling(50/scale, mythread.centor)
-        self.region = r.region()
+        self.region = utility.rect2region(rect)
 
-        size = int(self.img_crop.width*50/scale),int(self.img_crop.height*50/scale)
-        self.img_crop = self.img_crop.resize(size)
         self.master.destroy()
 
     def destroy(self):

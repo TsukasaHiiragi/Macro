@@ -56,7 +56,7 @@ class State:
     def next(self): return self.__next
     
     # override
-    def forward(self, usr_args, sys_args, prev):
+    def forward(self, usr_args, sys_args, act_cache, sym_cache):
         mythread.mt.text(state=self.path())
         return self.next()
 
@@ -83,8 +83,8 @@ class DummyState(State):
     def __init__(self, path, next=None):
         super().__init__(path, next=next)
 
-    def forward(self, usr_args, sys_args, prev):
-        super().forward(usr_args, sys_args, prev)
+    def forward(self, usr_args, sys_args, act_cache, sym_cache):
+        super().forward(usr_args, sys_args, act_cache, sym_cache)
         return self.next()
 
     def connect(self, next):
@@ -114,13 +114,18 @@ class MainState(State):
     def __init__(self, path, next=None):
         super().__init__(path, next=next)
 
-    def forward(self, usr_args, sys_args, prev):
-        super().forward(usr_args, sys_args, prev)
-        act = action.Action.load(State.strip(self.path()))
-        if act is None: 
-            self.record()
-        else:
+    def forward(self, usr_args, sys_args, act_cache, sym_cache):
+        super().forward(usr_args, sys_args, act_cache, sym_cache)
+        if self.path() in act_cache:
+            act = act_cache[self.path()]
             act.exe()
+        else:
+            act = action.Action.load(State.strip(self.path()))
+            if act is None: 
+                self.record()
+            else:
+                act.exe()
+            act_cache[self.path()] = act
         return self.next()
 
     def connect(self, next):
@@ -167,8 +172,8 @@ class SelectState(State):
         if choices is None: self.__choices = {}
         else: self.__choices = choices
 
-    def forward(self, usr_args, sys_args, prev):
-        super().forward(usr_args, sys_args, prev)
+    def forward(self, usr_args, sys_args, act_cache, sym_cache):
+        super().forward(usr_args, sys_args, act_cache, sym_cache)
         if self.__key == self.path():
             assert self.__key in sys_args, self.path()
             selected = sys_args[self.__key]
@@ -235,8 +240,8 @@ class BranchState(State):
         if possible: self.__possible = possible
         else: self.__possible = []
 
-    def forward(self, usr_args, sys_args, prev):
-        super().forward(usr_args, sys_args, prev)
+    def forward(self, usr_args, sys_args, act_cache, sym_cache):
+        super().forward(usr_args, sys_args, act_cache, sym_cache)
         self.print('Start searching ', end='')
         self.print('esc', state='KEY', end='');self.print(': exit')
         self.print('Undefined symbols are below: ')
@@ -257,8 +262,12 @@ class BranchState(State):
         hit = None
         while 1:
             for path in self.__possible:
-                symbol:image.Symbol = image.Symbol.load(State.strip(path))
-                if symbol is None: continue
+                if path in sym_cache:
+                    symbol:image.Symbol = sym_cache[path]
+                else:
+                    symbol:image.Symbol = image.Symbol.load(State.strip(path))
+                    if symbol is None: continue
+                    sym_cache[path] = symbol
                 hit = symbol.search(hwnd=None)
                 if hit: break
             if not monitor.is_alive(): 
@@ -334,53 +343,6 @@ class BranchState(State):
                 self.__possible.append(state.path())
         super().connect(exception)
 
-class CallState(State):
-    def __init__(self, path, next=None, table=None):
-        super().__init__(path, next=next)
-        if table: self.__table = table
-        else: self.__table = {'__main__':None}
-
-    # override
-    def forward(self, usr_args, sys_args, prev):
-        super().forward(usr_args, sys_args, prev)
-        if self.path() in sys_args:
-            caller_path = sys_args.pop(self.path())
-            return self.__table[caller_path]
-        else:
-            sys_args[self.path()] = prev
-            return self.next()
-
-    def extend(self, str):
-        return CallState.ext(str)
-
-    def ext(str):
-        return State.ext(f'{str}.cll')
-
-    def exists(path):
-        return State.exists(CallState.ext(path))
-
-    def open(path):
-        if CallState.exists(path):
-            return State.load(CallState.ext(path))
-        else:
-            return CallState(path)
-
-    def default(self):
-        code = super().default()
-        code['_type'] = 'CallState'
-        code['value']['table'] = self.__table
-        return code
-
-    # original
-    def define(self, head:State, tail:State):
-        super()._connect(next=head.path(), prev=tail.path())
-        head._connect(prev=self.path())
-        tail._connect(next=self.path())
-
-    def call(self, caller:State, returner:State):
-        caller._connect(next=self.path())
-        returner._connect(prev=self.path())
-        self.__table[caller.path()] = returner.path()
 
 class StateEncoder(json.JSONEncoder):
     def default(self, o):
@@ -404,7 +366,6 @@ class StateDecoder(json.JSONDecoder):
         if type == 'MainState': return MainState(**o['value'])
         if type == 'SelectState': return SelectState(**o['value'])
         if type == 'BranchState': return BranchState(**o['value'])
-        if type == 'CallState': return CallState(**o['value'])
         symbol = image.SymbolDecoder().object_hook(o)
         if symbol: return symbol
         act = action.ActionDecoder().object_hook(o)
@@ -416,14 +377,21 @@ class Executer:
         self.usr_args = {}
         self.sys_args = {}
         self.trigger = {}
+        self.cache = {}
+        self.act_cache = {}
+        self.sym_cache = {}
 
     def forward(self):
-        self.path = self.state.forward(self.usr_args, self.sys_args, self.path)
+        self.path = self.state.forward(self.usr_args, self.sys_args, self.act_cache, self.sym_cache)
         if self.path is None: return
         if self.path in self.trigger:
             func, args, kwargs = self.trigger[self.path]
             func(self.usr_args, self.sys_args, *args, **kwargs)
-        self.state = State.load(self.path)
+        if self.path in self.cache:
+            self.state = self.cache[self.path]
+        else:
+            self.state = State.load(self.path)
+            self.cache[self.path] = self.state
 
     def run(self, initial, **usr_args):
         self.path = '__main__'
