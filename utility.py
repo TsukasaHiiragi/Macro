@@ -46,6 +46,7 @@ class Timer:
         return time.time() - self.start
 
     def timeout(self, max):
+        if max is None: return False
         return self.elapse() > max
 
 def rect2region(rect):

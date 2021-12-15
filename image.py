@@ -223,7 +223,7 @@ class SymbolDecoder(json.JSONDecoder):
 
 class Capture(tk.Frame):
     # https://qiita.com/hisakichi95/items/47f6d37e6f425f29c8a8
-    def __init__(self, master=None, resize_rate=2):
+    def __init__(self, master=None, resize_rate=2, scale=None, position=None):
         super().__init__(master)
         w = self.winfo_screenwidth()
         h = self.winfo_screenheight()
@@ -273,6 +273,8 @@ class Capture(tk.Frame):
         self.end_x = None
         self.region = None
         self.img_crop = None
+        self.scale = scale
+        self.position = position
 
     # ドラッグ開始した時のイベント - - - - - - - - - - - - - - - - - - - - - - - - - - 
     def start_point_get(self,event):
@@ -320,6 +322,15 @@ class Capture(tk.Frame):
         self.img_crop = self.img.crop(rect)
         
         self.region = utility.rect2region(rect)
+
+        if self.scale:
+            r = Region(self.region)
+            r.translation(-self.position)
+            r.scaling(50/self.scale, mythread.centor)
+            self.region = r.region()
+
+            size = int(self.img_crop.width*50/self.scale),int(self.img_crop.height*50/self.scale)
+            self.img_crop = self.img_crop.resize(size)
 
         self.master.destroy()
 

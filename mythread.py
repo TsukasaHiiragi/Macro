@@ -21,19 +21,19 @@ class Syncronize:
         self.__complete = threading.Event()
         self.__exit = threading.Event()
 
-    def wait(self):
+    def wait(self, timeout):
         with LockX(self.__lock):
             self.__count += 1
             if self.__count == self.__n:
                 self.__exit.clear()
                 self.__complete.set()
-        self.__complete.wait()
+        self.__complete.wait(timeout=timeout)
         with LockX(self.__lock):
             self.__count -= 1
             if self.__count == 0:
                 self.__complete.clear()
                 self.__exit.set()
-        self.__exit.wait()
+        self.__exit.wait(timeout=5)
         
 class MyThread:
     def __init__(self, q=None, qs=None, id=0):
@@ -67,6 +67,7 @@ class MyThread:
         thread = threading.Thread(target=self.__display.mainloop, daemon=True)
         thread.start()
         self.root = self.__display.request('Empty')
+        self.local.thread_id = -1
         if self.__logger:
             self.__logger.mainloop()
         else:
@@ -79,13 +80,22 @@ class MyThread:
 
 
     def screen(self):
-        return LockX(self.__screen_lock)
+        if self.local.thread_id == 0:
+            return LockX()
+        else:
+            return LockX(self.__screen_lock)
 
     def mouse(self):
-        return LockX(self.__mouse_lock)
+        if self.local.thread_id == 0:
+            return LockX()
+        else:
+            return LockX(self.__mouse_lock)
 
     def disc(self):
-        return LockX(self.__disc_lock)
+        if self.local.thread_id == 0:
+            return LockX()
+        else:
+            return LockX(self.__disc_lock)
 
     def cripboard_aquire(self):
         self.__cripboard_lock.acquire()
@@ -137,11 +147,11 @@ class MyThread:
         assert self.__logger is not None
         return self.__logger.request(gui, **kwargs)
 
-    def syncronize(self, key, n):
+    def syncronize(self, key, n, timeout=180):
         with LockX(self.__sync_lock):
             if key not in self.__sync:
                 self.__sync[key] = Syncronize(n)
-        self.__sync[key].wait()
+        self.__sync[key].wait(timeout)
 
 mt:MyThread
 
@@ -163,15 +173,15 @@ def window(owner=None):
     return Window(owner=owner)
 
 class LockX:
-    def __init__(self, lock:threading.Lock):
+    def __init__(self, lock:threading.Lock=None):
         self.lock = lock
 
     def __enter__(self):
-        self.lock.acquire()
+        if self.lock: self.lock.acquire()
         return None
 
     def __exit__(self, ex_type, ex_value, trace):
-        self.lock.release()
+        if self.lock: self.lock.release()
         assert ex_type is None, ex_type
         return True
 
@@ -195,20 +205,20 @@ def controller(thread_id, q:queue.Queue):
     mt.print(f'start thread id = {thread_id}', state='DEBUG')
     mt.local.thread_id = thread_id
     mt.local.position = ((np.array([0.,0.]),np.array([np.inf,np.inf])),
-                         (np.array([-625.,-150.]),np.array([0.01,0.01])),
-                         (np.array([-625., 360.]),np.array([0.01,0.01])),
-                         (np.array([   5.,-150.]),np.array([0.01,0.01])),
-                         (np.array([   5., 360.]),np.array([0.01,0.01])),
-                         (np.array([ 640.,-150.]),np.array([0.01,0.01])),
-                         (np.array([ 640., 360.]),np.array([0.01,0.01])))[thread_id]
+                         (np.array([-615.,-150.]),np.array([0.01,0.01])),
+                         (np.array([-615., 360.]),np.array([0.01,0.01])),
+                         (np.array([  15.,-150.]),np.array([0.01,0.01])),
+                         (np.array([  15., 360.]),np.array([0.01,0.01])),
+                         (np.array([ 650.,-150.]),np.array([0.01,0.01])),
+                         (np.array([ 650., 360.]),np.array([0.01,0.01])))[thread_id]
     mt.local.scale = (50,44,44,44,44,44,44)[thread_id]
     region = (( 580,110,730,50),
-              (   0,470,635,50),
-              (   0,990,635,50),
-              ( 635,470,635,50),
-              ( 635,990,635,50),
-              (1270,470,635,50),
-              (1270,990,635,50))[thread_id]
+              (  10,470,635,50),
+              (  10,990,635,50),
+              ( 645,470,635,50),
+              ( 645,990,635,50),
+              (1280,470,635,50),
+              (1280,990,635,50))[thread_id]
     mt.textinit(*region)
     while 1:
         try:

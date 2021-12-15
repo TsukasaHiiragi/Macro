@@ -5,7 +5,11 @@ from k_project import *
 
 def gacha_raid():
     exe = Executer()
-    exe.run('gacha_raid\\head.dmy.stt.json')
+    exe.run('gacha_raid\\head.dmy.stt.json', timeout=None)
+
+def present():
+    exe = Executer()
+    exe.run('present\\head.dmy.stt.json', timeout=None)
 
 def regular(qs):
     attrs = ['fire','aqua','wind','volt','ray','dark']
@@ -52,14 +56,14 @@ def highlevel(qs, name, party_name=None,party_names=None):
 
 def raid_rag(qs):
     for i in range(3):
-        qs[2*i  ].put(mythread.Function(quest,  2*i+1, 'event\\raid\\rag', 465, f'raid_rag{i}', 2, ability_name='raid_rag_host'))
-        qs[2*i+1].put(mythread.Function(rescue, 2*i+2, 'event\\raid\\rag', 465, f'raid_rag{i}', 2, ability_name='raid_rag_guest'))
-        qs[2*i  ].put(mythread.Function(rescue, 2*i+1, 'event\\raid\\rag', 500, f'raid_rag{i}', 2, ability_name='raid_rag_guest'))
-        qs[2*i+1].put(mythread.Function(quest,  2*i+2, 'event\\raid\\rag', 500, f'raid_rag{i}', 2, ability_name='raid_rag_host'))
+        # qs[2*i  ].put(mythread.Function(quest,  2*i+1, 'event\\raid\\rag', 300, f'raid_rag{i}', 2, ability_name='raid_rag_host'))
+        # qs[2*i+1].put(mythread.Function(rescue, 2*i+2, 'event\\raid\\rag', 300, f'raid_rag{i}', 2, ability_name='raid_rag_guest'))
+        qs[2*i  ].put(mythread.Function(rescue, 2*i+1, 'event\\raid\\rag', 200, f'raid_rag{i}', 2, ability_name='raid_rag_guest'))
+        qs[2*i+1].put(mythread.Function(quest,  2*i+2, 'event\\raid\\rag', 200, f'raid_rag{i}', 2, ability_name='raid_rag_host'))
 
 def raid_ex(qs):
     for i in range(6):
-        qs[i].put(mythread.Function(quest,  i+1, 'event\\raid\\ex', 1800, f'raid_ex{i}', 1, ability_name='raid_ex'))
+        qs[i].put(mythread.Function(quest,  i+1, 'event\\raid\\ex', 45, f'raid_ex{i}', 1, ability_name='raid_ex'))
         
 def orympia(qs, attr, party_name=None, ability_name=None):
     for i in range(6):
@@ -68,11 +72,11 @@ def orympia(qs, attr, party_name=None, ability_name=None):
                 if i == j:
                     qs[i].put(
                         mythread.Function(
-                            quest,i+1,f'raid\\orympia\\rag\\{attr}',1,'uuid',6,party_name=party_name,ability_name=ability_name))
+                            quest,i+1,f'raid\\orympia\\rag\\{attr}',3,'uuid',6,party_name=party_name,ability_name=ability_name))
                 else:
                     qs[i].put(
                         mythread.Function(
-                            rescue,i+1,f'raid\\orympia\\rag\\{attr}',1,'uuid',6,party_name=party_name,ability_name=ability_name))
+                            rescue,i+1,f'raid\\orympia\\rag\\{attr}',3,'uuid',6,party_name=party_name,ability_name=ability_name))
 
 def catas(qs):
     attrs = [['dark','aqua'],['volt'],['ray','wind','fire']]
@@ -93,17 +97,20 @@ def dateline(qs):
     for i in range(6):
         qs[i].put(mythread.Function(wait, 5))
 
+def pop(qs):
+    for i in range(6):
+        qs[i].get_nowait()
+
 if __name__=="__main__":
     qs = [None]*6
     for i in range(6):
         qs[i] = queue.Queue()
-    
-    regular(qs)
-    hyperion(qs)
-    orympia(qs, 'dark', party_name='ray\\attack')
-    orympia(qs, 'wind', party_name='fire\\attack')
+    """
     dateline(qs)
-
+    highlevel(qs,'raid\\machinebeast\\dark',party_name='ray\\deffense')
+    highlevel(qs,'raid\\machinebeast\\volt',party_name='wind\\deffense')
+    highlevel(qs,'raid\\machinebeast\\fire',party_name='aqua\\deffense')
+    highlevel(qs,'raid\\orympia\\rag+\\volt',party_name='wind\\deffense')
     highlevel(qs,'raid\\orympia\\rag+\\aqua',
         party_names=['volt\\deffense',
                      'volt\\deffense',
@@ -111,24 +118,21 @@ if __name__=="__main__":
                      'volt\\attack',
                      'volt\\deffense',
                      'volt\\deffense'])
-    highlevel(qs,'raid\\machinebeast\\fire',party_name='aqua\\deffense')
-    highlevel(qs,'raid\\machinebeast\\dark',party_name='ray\\deffense')
-    highlevel(qs,'raid\\machinebeast\\volt',party_name='wind\\deffense')
-    highlevel(qs,'raid\\orympia\\rag+\\volt',party_name='wind\\deffense')
-    
-    orympia(qs, 'volt', party_name='wind\\attack', ability_name='wind\\burst\\normal')
-    orympia(qs, 'fire', party_name='aqua\\attack', ability_name='aqua\\burst\\normal')
-    hyperion(qs)
-    
+    highlevel(qs,'raid\\orympia\\rag+\\dark',party_name='ray\\deffense')
     regular(qs)
-    
+    """
+    hyperion(qs)
+    # orympia(qs, 'aqua', party_name='volt\\attack')
+    # pop(qs)
+    # pop(qs)
+
     raid = [None]*6
     for i in range(6):
         raid[i] = queue.Queue()
 
-    # regular(raid)
-    # orympia(raid, 'aqua', party_name='volt\\attack')
-    raid_rag(raid)    
+    regular(raid)
+    orympia(raid, 'ray', party_name='dark\\attack')
+    # raid_rag(raid)    
     
     advent = [None]*6
     for i in range(6):
@@ -172,6 +176,16 @@ if __name__=="__main__":
         gacha[i] = queue.Queue()
         gacha[i].put(mythread.Function(gacha_raid))
 
+    other = [None]*6
+    for i in range(6):
+        other[i] = queue.Queue()
+        other[i].put(mythread.Function(rescue,1,'rescue',24,'uuid',1))
+
+    receive = [None]*6
+    for i in range(6):
+        receive[i] = queue.Queue()
+        receive[i].put(mythread.Function(present))
+
     id = 6
     q = queue.Queue()
     attrs = ['aqua']
@@ -179,7 +193,11 @@ if __name__=="__main__":
         q.put(mythread.Function(set_party, f'{attr}\\deffense', id))
 
     new = queue.Queue()
-    new.put(mythread.Function(story))
+    new.put(mythread.Function(restore, 6))
+    
+    tmp = queue.Queue()
+    tmp.put(mythread.Function(rescue,1,'tmp',1,'uuid',1))
+    
 
     abi = queue.Queue()
     abi.put(mythread.Function(set_abi, 'union\\phase4', id))
@@ -197,6 +215,6 @@ if __name__=="__main__":
         abis[2*i  ].put(mythread.Function(use_ability, 'union\\phase4', 2*i+1, f'uuid{i}', 2))
         abis[2*i+1].put(mythread.Function(use_ability, 'union\\phase4', 2*i+2, f'uuid{i}', 2))
 
-    mythread.mt = mythread.MyThread(qs=raid)
+    mythread.mt = mythread.MyThread(qs=other)
     mythread.mt.start()
     

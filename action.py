@@ -202,12 +202,15 @@ class ActionDecoder(json.JSONDecoder):
         if type == 'Capture': return Capture(**o['value'])
 
 class Monitor:
-    def __init__(self):
+    def __init__(self, scale=None, position=None):
         self.lock = threading.Lock()
         self.action = Actions()
 
         self.shift = False
         self.hot = None
+
+        self.scale= scale
+        self.position = position
 
         with mouse.Listener(on_click=self.click) as mouse_listener, keyboard.Listener(
             on_press=self.press,on_release=self.release) as keyboard_listener:
@@ -216,17 +219,23 @@ class Monitor:
             mouse_listener.join()
 
     def click(self, x, y, button, pressed):
-        if pressed and button.name == 'left':
-            self.lock.acquire()
-            self.action.append(Click(x,y))
-            mythread.mt.print(f'click {x} {y}', state='DEBUG')
-            self.lock.release()
+        if pressed:
+            if self.scale:
+                coord = np.array([x,y])
+                coord = mythread.centor+(coord-self.position-mythread.centor)*50/self.scale
+                x,y = int(coord[0]),int(coord[1])
+        
+            if button.name == 'left':
+                self.lock.acquire()
+                self.action.append(Click(x,y))
+                mythread.mt.print(f'click {x} {y}', state='DEBUG')
+                self.lock.release()
 
-        if pressed and button.name == 'right':
-            self.lock.acquire()
-            self.action.append(Scroll(x,y,-1000))
-            mythread.mt.print(f'scroll {x} {y}', state='DEBUG')
-            self.lock.release()
+            if button.name == 'right':
+                self.lock.acquire()
+                self.action.append(Scroll(x,y,-1000))
+                mythread.mt.print(f'scroll {x} {y}', state='DEBUG')
+                self.lock.release()
 
     def press(self, key):
         try:

@@ -4,6 +4,8 @@ import string
 import json
 import time
 
+import numpy as np
+
 import image
 import action
 import utility
@@ -157,11 +159,12 @@ class MainState(State):
             self.print('y', state='KEY', end='');self.print(': Start, ', end='')
             action.key_input(['y'])
             self.print('Esc', state='KEY', end='');self.print(': Finish')
-            monitor = action.Monitor()
+            monitor = action.Monitor(scale=mythread.mt.local.scale, position=mythread.mt.local.position[0])
             self.print('Save the action ', state='INPUT')
             self.print('y', state='KEY', end='');self.print(': Save, ', end='')
             self.print('n', state='KEY', end='');self.print(': Again')
             if action.key_input(['y','n']) == 'y':
+                
                 monitor.action.save(State.strip(self.path()))
                 return
 
@@ -259,6 +262,7 @@ class BranchState(State):
         monitor.start()
         self.print(f'searching...', state='DEBUG')
         # hwnd = mythread.mt.empty() 
+        timer = utility.Timer()
         hit = None
         while 1:
             for path in self.__possible:
@@ -270,6 +274,7 @@ class BranchState(State):
                     sym_cache[path] = symbol
                 hit = symbol.search(hwnd=None)
                 if hit: break
+            
             if not monitor.is_alive(): 
                 if monitor.key == 'esc':
                     # mythread.mt.close(hwnd)
@@ -281,8 +286,10 @@ class BranchState(State):
                     monitor = action.KeyInput(nosymbol.keys())
                     monitor.start()
                     # hwnd = mythread.mt.empty() 
+            
             if hit: break
             if self.next(): return self.next()
+            if timer.timeout(60): return self.path()
             time.sleep(0.6)
             
         # mythread.mt.close(hwnd)
@@ -322,7 +329,8 @@ class BranchState(State):
         self.print('y', state='KEY', end='');self.print(': Start, ', end='')
         self.print('n', state='KEY', end='');self.print(': NULL')
         if action.key_input(['y', 'n']) == 'y':
-            app:image.Capture = mythread.mt.request(image.Capture)
+            app:image.Capture = mythread.mt.request(image.Capture, 
+                scale=mythread.mt.local.scale, position=mythread.mt.local.position[0])
             time.sleep(0.5)
 
             if app.img_crop is None: return
@@ -380,25 +388,49 @@ class Executer:
         self.cache = {}
         self.act_cache = {}
         self.sym_cache = {}
+        self.timer = None
 
-    def forward(self):
+    def forward(self, timeout):
         self.path = self.state.forward(self.usr_args, self.sys_args, self.act_cache, self.sym_cache)
         if self.path is None: return
         if self.path in self.trigger:
             func, args, kwargs = self.trigger[self.path]
-            func(self.usr_args, self.sys_args, *args, **kwargs)
+            func(self, *args, **kwargs)
+        
+        if self.timer.timeout(timeout):
+            self.timer = utility.Timer()
+            id = mythread.mt.local.thread_id
+            scale = mythread.mt.local.scale
+            position = mythread.mt.local.position
+            with mythread.mt.screen(), mythread.mt.mouse(), mythread.mt.disc():
+                mythread.mt.local.thread_id = 0
+                mythread.mt.local.scale = 50
+                mythread.mt.local.position = (np.array([0.,0.]),np.array([np.inf,np.inf]))
+                exe = Executer()
+                exe.run(f'restore\\id{id}\\head.dmy.stt.json')
+            mythread.mt.local.thread_id = id
+            mythread.mt.local.scale = scale
+            mythread.mt.local.position = position
+            self.path = 'page\\head.dmy.stt.json'
+
         if self.path in self.cache:
             self.state = self.cache[self.path]
         else:
             self.state = State.load(self.path)
             self.cache[self.path] = self.state
 
-    def run(self, initial, **usr_args):
+            
+
+    def run(self, initial, timeout=1800, **usr_args):
         self.path = '__main__'
         self.usr_args = usr_args
         self.state = State.load(initial)
+        self.timer = utility.Timer()
         while self.path:
-            self.forward()
+            self.forward(timeout)
+
+    def reset(self):
+        self.timer = utility.Timer()
 
     def set_trigger(self, path, func, *args, **kwargs):
         self.trigger[path] = func, args, kwargs
