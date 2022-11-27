@@ -3,6 +3,7 @@ import re
 import string
 import json
 import time
+import subprocess
 
 import numpy as np
 
@@ -379,6 +380,13 @@ class StateDecoder(json.JSONDecoder):
         act = action.ActionDecoder().object_hook(o)
         if act: return act
 
+def openwindow(exe,id,user):
+    subprocess.run(
+        ["start",
+        "C:/PROGRA~1/Google/Chrome/Application/chrome.exe",
+        f"--user-data-dir=C:/{user}0{id}"]
+        ,shell=True)
+
 class Executer:
     def __init__(self):
         self.path = None
@@ -407,23 +415,26 @@ class Executer:
                 mythread.mt.local.scale = 50
                 mythread.mt.local.position = (np.array([0.,0.]),np.array([np.inf,np.inf]))
                 exe = Executer()
-                exe.run(f'restore\\id{id}\\head.dmy.stt.json')
+                exe.set_trigger(f'restore\\id{id}\\open.dmy.stt.json',openwindow,id,'tfall')
+                exe.run(f'restore\\id{id}\\head.dmy.stt.json',timeout=None)
             mythread.mt.local.thread_id = id
             mythread.mt.local.scale = scale
             mythread.mt.local.position = position
+            exe.run('restore\\closemain.dmy.stt.json',timeout=None)
             self.path = 'page\\head.dmy.stt.json'
 
         if self.path in self.cache:
             self.state = self.cache[self.path]
         else:
             self.state = State.load(self.path)
-            self.cache[self.path] = self.state
-
-            
+            self.cache[self.path] = self.state 
 
     def run(self, initial, timeout=1800, **usr_args):
         self.path = '__main__'
         self.usr_args = usr_args
+        if initial in self.trigger:
+            func, args, kwargs = self.trigger[initial]
+            func(self, *args, **kwargs)
         self.state = State.load(initial)
         self.timer = utility.Timer()
         while self.path:

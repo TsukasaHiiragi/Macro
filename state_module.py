@@ -223,7 +223,8 @@ def quest():
     a.man('result\\aquire').connect(a.brn('result'))
     a.slc('result\\count').connect(
         a.slc('result\\count').path(), retry=a.slc('retry'), finish=a.slc('finish'), back=a.man('back'))
-    a.man('result\\encount').connect(a.dmy('result\\encount'))
+    # a.man('result\\encount').connect(a.dmy('result\\encount'))
+    a.man('result\\encount').connect(a.slc('result\\count'))
     a.dmy('result\\encount').connect(a.slc('result\\comeback'))
     a.slc('result\\comeback').connect(
         a.slc('result\\comeback').path(), retry=DummyState.open('page\\head'), finish=a.dmy('tail'))
@@ -246,7 +247,7 @@ def quest():
     a.slc('finish').connect('result', none=a.man('finish'), once=a.man('back'), union=a.man('back'))
     a.man('finish').connect(a.brn('finish'))
     a.man('back').connect(a.brn('finish'))
-    names = ['main', 'raid', 'rescue', 'item', 'attr', 'epic', 'advent', 
+    names = ['main', 'raid', 'rescue', 'item', 'attr', 'epic', 'advent', 'union',
              'acce', 'guild', 'battlefield', 'event', 'challenge', 'cross']
     a.brn('finish').connect(
         *[a.dmy(f'finish\\{name}') for name in names], a.man('finish\\friend'), a.man('finish\\reward'), 
@@ -263,7 +264,8 @@ def quest():
 
     a.dmy('union').connect(a.man('union\\back'))
     a.man('union\\back').connect(a.brn('union\\back'))
-    a.brn('union\\back').connect(a.slc('union\\scroll\\sc1'))
+    a.brn('union\\back').connect(a.slc('union\\scroll\\sc1'),a.man('union\\mvp'))
+    a.man('union\\mvp').connect(a.brn('union\\back'))
     a.slc('union\\scroll\\sc1').connect('scroll', sc1=a.slc('union\\position'), sc2=a.man('union\\scroll\\sc2'))
     a.man('union\\scroll\\sc2').connect(a.slc('union\\scroll\\sc2'))
     a.slc('union\\scroll\\sc2').connect('scroll', sc2=a.slc('union\\position'))
@@ -288,6 +290,7 @@ def battle():
     a.dmy('syncronize').connect(a.dmy('release'))
     a.dmy('release').connect(a.slc('request'))
     a.slc('request').connect('team', multi=a.man('cancel'), random=a.man('request'), union=a.man('check'))
+    a.man('cancel').connect(a.dmy('ability'))
     a.man('check').connect(a.man('request'))
     a.man('request').connect(a.dmy('ability'))
     a.dmy('ability').connect(a.slc('auto'))
@@ -535,7 +538,8 @@ def story():
     a.dmy('head').connect(a.brn('head'))
     a.brn('head').connect(a.man('newquest'), a.man('pos1'))
     a.man('pos1').connect(a.brn('pos1'))
-    a.brn('pos1').connect(a.man('surpport'), a.man('skip'), a.man('recover'), a.man('tail'), a.man('pos1'))
+    a.brn('pos1').connect(a.man('surpport'), a.man('skip'), a.man('scenario'), a.man('recover'), a.man('tail'), a.man('pos1'))
+    a.man('scenario').connect(a.brn('pos1'))
     a.man('recover').connect(a.brn('recover'))
     a.brn('recover').connect(a.man('ok'))
     a.man('ok').connect(a.brn('pos1'))
@@ -554,7 +558,7 @@ def story():
     a.man('attack').connect(a.brn('attack'))
     a.brn('attack').connect(a.man('result'), a.man('skip'), a.man('attack'))
     a.man('result').connect(a.brn('result'))
-    a.brn('result').connect(a.man('surpport'), a.man('newitem'), a.man('reward'), a.man('rankup'), a.man('result'), a.man('skip'))
+    a.brn('result').connect(a.man('surpport'), a.man('recover'), a.man('reward'), a.man('newitem'), a.man('rankup'), a.man('result'), a.man('skip'))
     a.man('newitem').connect(a.brn('result'))
     a.man('rankup').connect(a.brn('result'))
     a.man('reward').connect(a.brn('reward'))
@@ -567,18 +571,21 @@ def restore():
     for id in range(1,7):
         a.dmy(f'id{id}\\head').connect(a.brn(f'id{id}\\head'))
         a.brn(f'id{id}\\head').connect(a.man(f'id{id}\\close'))
-        a.man(f'id{id}\\close').connect(a.brn(f'id{id}\\close'))
-        a.brn(f'id{id}\\close').connect(a.man(f'id{id}\\open'))
-        a.man(f'id{id}\\open').connect(a.brn(f'id{id}\\open'))
+        a.man(f'id{id}\\close').connect(a.dmy(f'id{id}\\open'))
+        a.dmy(f'id{id}\\open').connect(a.brn(f'id{id}\\open'))
         a.brn(f'id{id}\\open').connect(a.man(f'id{id}\\demado'))
         a.man(f'id{id}\\demado').connect(a.brn(f'id{id}\\demado'))
         a.brn(f'id{id}\\demado').connect(a.man(f'id{id}\\kpro'))
         a.man(f'id{id}\\kpro').connect(a.brn(f'id{id}\\kpro'))
-        a.brn(f'id{id}\\kpro').connect(a.man(f'id{id}\\start'))
-        a.man(f'id{id}\\start').connect(a.brn(f'id{id}\\start'))
-        a.brn(f'id{id}\\start').connect(a.man(f'id{id}\\ok'), a.dmy(f'id{id}\\tail'), exception=a.man(f'id{id}\\quest'))
-        a.man(f'id{id}\\ok').connect(a.brn(f'id{id}\\start'))
-        a.man(f'id{id}\\quest').connect(a.brn(f'id{id}\\start'))
+        a.brn(f'id{id}\\kpro').connect(a.man(f'id{id}\\closemain'))
+        a.man(f'id{id}\\closemain').connect(a.dmy('tail'))
+        
+    a.dmy('closemain').connect(a.brn('closemain'))
+    a.brn('closemain').connect(a.man('start'))
+    a.man('start').connect(a.brn('start'))
+    a.brn('start').connect(a.man('ok'), a.dmy('tail'), a.man('start'),exception=a.man('quest'))
+    a.man('ok').connect(a.brn('start'))
+    a.man('quest').connect(a.brn('start'))
 
     a.dmy('result\\head').connect(a.brn('result\\head'))
     a.brn('result\\head').connect(
@@ -609,6 +616,112 @@ def restore():
     a.man('battle\\release').connect(SelectState.open('battle\\auto'))
     a.man('battle\\request').connect(SelectState.open('battle\\auto'))
     a.save()
+    
+def episode():
+    a = Assister('episode')
+    a.dmy('head').connect(a.brn('head'))
+    a.brn('head').connect(a.man('list'))
+    a.man('list').connect(a.brn('list'))
+    a.brn('list').connect(a.dmy('2episodes'),a.dmy('3episodes'),a.man('list'))
+
+    a.man('lock').connect(a.brn('head'))
+    
+# 2episodes\\pos1
+    a.dmy('2episodes').connect(a.man('2episodes\\pos1'))
+    a.man('2episodes\\pos1').connect(a.brn('2episodes\\pos1'))
+    a.brn('2episodes\\pos1').connect(a.man('2episodes\\pos1'))
+    a.man('2episodes\\pos1').connect(a.brn('2episodes\\pos1'))
+    a.brn('2episodes\\pos1').connect(
+        a.man('2episodes\\pos1\\seen'),a.man('2episodes\\pos1\\skip'))
+    a.man('2episodes\\pos1\\seen').connect(a.brn('2episodes\\pos2'))
+    a.man('2episodes\\pos1\\skip').connect(a.brn('2episodes\\pos1\\skip'))
+    a.brn('2episodes\\pos1\\skip').connect(a.man('2episodes\\pos1\\summary'))
+    a.man('2episodes\\pos1\\summary').connect(a.brn('2episodes\\pos1\\summary'))
+    a.brn('2episodes\\pos1\\summary').connect(a.man('2episodes\\pos1\\back'))
+    a.man('2episodes\\pos1\\back').connect(a.brn('2episodes\\pos1\\back'))
+    a.brn('2episodes\\pos1\\back').connect(
+        a.man('2episodes\\pos1\\reward'),a.man('2episodes\\pos2'),a.man('2episodes\\pos1\\back'))
+    a.man('2episodes\\pos1\\reward').connect(a.brn('2episodes\\pos1\\back'))
+# 2episodes\\pos2  
+    a.man('2episodes\\pos2').connect(a.brn('2episodes\\pos2'))
+    a.brn('2episodes\\pos2').connect(a.man('2episodes\\pos2'))
+    a.man('2episodes\\pos2').connect(a.brn('2episodes\\pos2'))
+    a.brn('2episodes\\pos2').connect(
+        a.man('lock'),a.man('2episodes\\pos2\\seen'),a.man('2episodes\\pos2\\skip'))
+    a.man('2episodes\\pos2\\seen').connect(a.brn('head'))
+    a.man('2episodes\\pos2\\skip').connect(a.brn('2episodes\\pos2\\skip'))
+    a.brn('2episodes\\pos2\\skip').connect(a.man('2episodes\\pos2\\summary'))
+    a.man('2episodes\\pos2\\summary').connect(a.brn('2episodes\\pos2\\summary'))
+    a.brn('2episodes\\pos2\\summary').connect(a.man('2episodes\\pos2\\harem'))
+    a.man('2episodes\\pos2\\harem').connect(a.brn('2episodes\\pos2\\harem'))
+    a.brn('2episodes\\pos2\\harem').connect(a.man('2episodes\\pos2\\ok'),a.man('2episodes\\pos2\\harem'))
+    a.man('2episodes\\pos2\\ok').connect(a.brn('2episodes\\pos2\\ok'))
+    a.brn('2episodes\\pos2\\ok').connect(a.man('2episodes\\pos2\\back'))
+    a.man('2episodes\\pos2\\back').connect(a.brn('2episodes\\pos2\\back'))
+    a.brn('2episodes\\pos2\\back').connect(
+        a.man('2episodes\\pos2\\reward'),a.man('2episodes\\pos2\\aquire'),a.man('list'),
+        a.man('2episodes\\pos2\\back'))
+    a.man('2episodes\\pos2\\reward').connect(a.brn('2episodes\\pos2\\back'))
+    a.man('2episodes\\pos2\\aquire').connect(a.brn('2episodes\\pos2\\back'))
+# 3episodes\\pos1   
+    a.dmy('3episodes').connect(a.man('3episodes\\pos1'))
+    a.man('3episodes\\pos1').connect(a.brn('3episodes\\pos1'))
+    a.brn('3episodes\\pos1').connect(a.man('3episodes\\pos1'))
+    a.man('3episodes\\pos1').connect(a.brn('3episodes\\pos1'))
+    a.brn('3episodes\\pos1').connect(
+        a.man('3episodes\\pos1\\seen'),a.man('3episodes\\pos1\\skip'))
+    a.man('3episodes\\pos1\\seen').connect(a.brn('3episodes\\pos2'))
+    a.man('3episodes\\pos1\\skip').connect(a.brn('3episodes\\pos1\\skip'))
+    a.brn('3episodes\\pos1\\skip').connect(a.man('3episodes\\pos1\\summary'))
+    a.man('3episodes\\pos1\\summary').connect(a.brn('3episodes\\pos1\\summary'))
+    a.brn('3episodes\\pos1\\summary').connect(a.man('3episodes\\pos1\\back'))
+    a.man('3episodes\\pos1\\back').connect(a.brn('3episodes\\pos1\\back'))
+    a.brn('3episodes\\pos1\\back').connect(
+        a.man('3episodes\\pos1\\reward'),a.man('3episodes\\pos2'),a.man('3episodes\\pos1\\back'))
+    a.man('3episodes\\pos1\\reward').connect(a.brn('3episodes\\pos1\\back'))
+# 3episodes\\pos2   
+    a.man('3episodes\\pos2').connect(a.brn('3episodes\\pos2'))
+    a.brn('3episodes\\pos2').connect(a.man('3episodes\\pos2'))
+    a.man('3episodes\\pos2').connect(a.brn('3episodes\\pos2'))
+    a.brn('3episodes\\pos2').connect(
+        a.man('lock'),a.man('3episodes\\pos2\\seen'),a.man('3episodes\\pos2\\skip'))
+    a.man('3episodes\\pos2\\seen').connect(a.brn('3episodes\\pos3'))
+    a.man('3episodes\\pos2\\skip').connect(a.brn('3episodes\\pos2\\skip'))
+    a.brn('3episodes\\pos2\\skip').connect(a.man('3episodes\\pos2\\summary'))
+    a.man('3episodes\\pos2\\summary').connect(a.brn('3episodes\\pos2\\summary'))
+    a.brn('3episodes\\pos2\\summary').connect(a.man('3episodes\\pos2\\harem'))
+    a.man('3episodes\\pos2\\harem').connect(a.brn('3episodes\\pos2\\harem'))
+    a.brn('3episodes\\pos2\\harem').connect(a.man('3episodes\\pos2\\ok'),a.man('3episodes\\pos2\\harem'))
+    a.man('3episodes\\pos2\\ok').connect(a.brn('3episodes\\pos2\\ok'))
+    a.brn('3episodes\\pos2\\ok').connect(a.man('3episodes\\pos2\\back'))
+    a.man('3episodes\\pos2\\back').connect(a.brn('3episodes\\pos2\\back'))
+    a.brn('3episodes\\pos2\\back').connect(
+        a.man('3episodes\\pos2\\reward'),a.man('3episodes\\pos2\\aquire'),a.man('3episodes\\pos3'),
+        a.man('3episodes\\pos2\\back'))
+    a.man('3episodes\\pos2\\reward').connect(a.brn('3episodes\\pos2\\back'))
+    a.man('3episodes\\pos2\\aquire').connect(a.brn('3episodes\\pos2\\back'))
+# 3episodes\\pos3
+    a.man('3episodes\\pos3').connect(a.brn('3episodes\\pos3'))
+    a.brn('3episodes\\pos3').connect(a.man('3episodes\\pos3'))
+    a.man('3episodes\\pos3').connect(a.brn('3episodes\\pos3'))
+    a.brn('3episodes\\pos3').connect(
+        a.man('lock'),a.man('3episodes\\pos3\\seen'),a.man('3episodes\\pos3\\skip'))
+    a.man('3episodes\\pos3\\seen').connect(a.brn('head'))
+    a.man('3episodes\\pos3\\skip').connect(a.brn('3episodes\\pos3\\skip'))
+    a.brn('3episodes\\pos3\\skip').connect(a.man('3episodes\\pos3\\summary'))
+    a.man('3episodes\\pos3\\summary').connect(a.brn('3episodes\\pos3\\summary'))
+    a.brn('3episodes\\pos3\\summary').connect(a.man('3episodes\\pos3\\harem'))
+    a.man('3episodes\\pos3\\harem').connect(a.brn('3episodes\\pos3\\harem'))
+    a.brn('3episodes\\pos3\\harem').connect(a.man('3episodes\\pos3\\ok'),a.man('3episodes\\pos3\\harem'))
+    a.man('3episodes\\pos3\\ok').connect(a.brn('3episodes\\pos3\\ok'))
+    a.brn('3episodes\\pos3\\ok').connect(a.man('3episodes\\pos3\\back'))
+    a.man('3episodes\\pos3\\back').connect(a.brn('3episodes\\pos3\\back'))
+    a.brn('3episodes\\pos3\\back').connect(
+        a.man('3episodes\\pos3\\reward'),a.man('3episodes\\pos3\\aquire'),a.man('list'),
+        a.man('3episodes\\pos3\\back'))
+    a.man('3episodes\\pos3\\reward').connect(a.brn('3episodes\\pos3\\back'))
+    a.man('3episodes\\pos3\\aquire').connect(a.brn('3episodes\\pos3\\back'))
+    a.save()
 
 def tmp():
     page()
@@ -630,6 +743,7 @@ def tmp():
     present()
     story()
     restore()
+    episode()
 
 if __name__=="__main__":
     q = queue.Queue()

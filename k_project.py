@@ -1,9 +1,11 @@
 import json
 import os
 import datetime
-from time import sleep, time
+from time import sleep
 
-from state import Executer
+import numpy as np
+
+from state import Executer, openwindow
 import mythread
 import utility
 import action
@@ -90,15 +92,13 @@ def encount(exe, is_encount, id, key, members):
     mythread.mt.glob['encount'] = is_encount
     mythread.mt.syncronize(f'{key}_encount', members)
     if is_encount:
-        quest(id,'raid\\orympia\\rag\\phantom',1,'orympia_phantom',members,
-            party_name='aqua\\attack',ability_name='aqua\\burst\\normal')
+        quest(id,'raid\\orympia\\rag\\phantom',1,'orympia_phantom',members)
         exe.reset()
 
 def orympia_phantom(id, key, members):
     mythread.mt.syncronize(f'{key}_encount', members)
     if mythread.mt.glob['encount']:
-        rescue(id,'raid\\orympia\\rag\\phantom',1,'orympia_phantom',members,
-            party_name='aqua\\attack',ability_name='aqua\\burst\\normal')
+        rescue(id,'raid\\orympia\\rag\\phantom',1,'orympia_phantom',members)
 
 def ready(exe, key, members):
     mythread.mt.syncronize(f'{key}_ready', members, timeout=None)
@@ -144,14 +144,14 @@ def init_ability():
     exe.run('ability\\head.dmy.stt.json', chara='chara1')
 
 def ability(exe, name, id, key, members):
-    dir = os.path.join('C:\\Users\\tsuka\\Macro\\ability',name,f'{id}')
+    dir = os.path.join('C:\\Users\\miyas\\Macro\\ability',name,f'{id}')
     if os.path.exists(os.path.join(dir,'ability.abi.json')):
         use_ability(name, id, key, members)
     else:
         set_abi(name, id)
 
 def use_ability(name, id, key, members):
-    dir = os.path.join('C:\\Users\\tsuka\\Macro\\ability',name,f'{id}')
+    dir = os.path.join('C:\\Users\\miyas\\Macro\\ability',name,f'{id}')
     symbol:image.LeafSymbol = image.Symbol.load(f'ability\\id{id}\\list')
     symbol.image_path = os.path.join(dir,'img','list.png')
     symbol.save(f'ability\\id{id}\\list')
@@ -182,7 +182,7 @@ def use_ability(name, id, key, members):
             path = f'ability\\id{id}\\scroll\\{abi["chara"]}.slc.stt.json'
 
 def set_abi(name, id):
-    dir = os.path.join('C:\\Users\\tsuka\\Macro\\ability',name,f'{id}')
+    dir = os.path.join('C:\\Users\\miyas\\Macro\\ability',name,f'{id}')
     with utility.openx(os.path.join(dir,'img','list.png'), 'wt') as f:
         pass
     symbol:image.LeafSymbol = image.Symbol.load('set_abi\\list')
@@ -250,7 +250,7 @@ def init_party():
     exe.run('party\\head.dmy.stt.json')
 
 def party(exe, name, id):
-    dir = os.path.join('C:\\Users\\tsuka\\Macro\\party',f'{id}',name)
+    dir = os.path.join('C:\\Users\\miyas\\Macro\\party',f'{id}',name)
     if os.path.exists(os.path.join(dir,'party.pty.json')):
         use_party(name, id)
     else:
@@ -258,7 +258,7 @@ def party(exe, name, id):
 
 def use_party(name, id):
     mythread.mt.print(name, state='KEYWORD')
-    dir = os.path.join('C:\\Users\\tsuka\\Macro\\party',f'{id}',name)
+    dir = os.path.join('C:\\Users\\miyas\\Macro\\party',f'{id}',name)
     symbol:image.LeafSymbol = image.Symbol.load(f'party\\id{id}\\party')
     symbol.image_path = os.path.join(dir,'party.png')
     symbol.save(f'party\\id{id}\\party')
@@ -271,7 +271,7 @@ def use_party(name, id):
 
 def set_party(name, id):
     mythread.mt.print(name, state='KEYWORD')
-    dir = os.path.join('C:\\Users\\tsuka\\Macro\\party',f'{id}',name)
+    dir = os.path.join('C:\\Users\\miyas\\Macro\\party',f'{id}',name)
     with utility.openx(os.path.join(dir,'party.png'), 'wt') as f:
         pass
     symbol:image.LeafSymbol = image.Symbol.load(f'set_party\\party')
@@ -318,10 +318,42 @@ def story():
     exe = Executer()
     exe.run('story\\head.dmy.stt.json')
 
-def restore(id):
-    exe = Executer()
-    exe.run(f'restore\\id{id}\\head.dmy.stt.json')
+def restore(id,user='twinter'):
+    id = mythread.mt.local.thread_id
+    scale = mythread.mt.local.scale
+    position = mythread.mt.local.position
+    with mythread.mt.screen(), mythread.mt.mouse(), mythread.mt.disc():
+        mythread.mt.local.thread_id = 0
+        mythread.mt.local.scale = 50
+        mythread.mt.local.position = (np.array([0.,0.]),np.array([np.inf,np.inf]))
+        exe = Executer()
+        exe.set_trigger(f'restore\\id{id}\\open.dmy.stt.json',openwindow,id,user)
+        exe.run(f'restore\\id{id}\\head.dmy.stt.json')
+    mythread.mt.local.thread_id = id
+    mythread.mt.local.scale = scale
+    mythread.mt.local.position = position
+    exe.run('restore\\start.man.stt.json')
+    
+def start(id,user='twinter'):
+    id = mythread.mt.local.thread_id
+    scale = mythread.mt.local.scale
+    position = mythread.mt.local.position
+    with mythread.mt.screen(), mythread.mt.mouse(), mythread.mt.disc():
+        mythread.mt.local.thread_id = 0
+        mythread.mt.local.scale = 50
+        mythread.mt.local.position = (np.array([0.,0.]),np.array([np.inf,np.inf]))
+        exe = Executer()
+        exe.set_trigger(f'restore\\id{id}\\open.dmy.stt.json',openwindow,id,user)
+        exe.run(f'restore\\id{id}\\open.dmy.stt.json')
+    mythread.mt.local.thread_id = id
+    mythread.mt.local.scale = scale
+    mythread.mt.local.position = position
+    exe.run('restore\\start.man.stt.json')
 
 def wait(t):
     while datetime.datetime.now().hour < t:
         sleep(10)
+
+def episode():
+    exe = Executer()
+    exe.run('episode\\head.dmy.stt.json')

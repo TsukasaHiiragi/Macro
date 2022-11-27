@@ -1,10 +1,10 @@
 import glob
 import json
 
-paths = glob.glob('C:\\Users\\tsuka\\Macro\\quest\\event\\union\\**\\*.qst.json', recursive=True)
+paths = glob.glob('C:\\Users\\miyas\\Macro\\quest\\raid\\disa\\ex\\*.qst.json', recursive=True)
 for path in paths:
     with open(path,'rt') as f:
         args = json.load(f)
-    args['type'] = 'raid'
+    args['position'] = 'pos1'
     with open(path,'wt') as f:
         json.dump(args,f,indent=2)
