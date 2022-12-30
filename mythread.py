@@ -11,7 +11,7 @@ import display
 import action
             
 rect_max = (0,0,1919,1079)
-centor = np.array([945.,415.])
+centor = np.array([952.5,275.5])
 
 class Syncronize:
     def __init__(self, n):
@@ -44,8 +44,10 @@ class MyThread:
         self.__disc_lock = threading.Lock()
         self.__cripboard_lock = threading.Lock()
         self.__sync_lock = threading.Lock()
+        self.__message_lock = threading.Lock()
         self.__sync:dict[str,Syncronize] = {}
         self.__display = display.Display()
+        self.__message = {}
         self.root = None
         if q:
             root = tk.Tk()
@@ -77,6 +79,7 @@ class MyThread:
                 if key == 'f1':
                     with self.screen(),self.mouse(),self.disc():
                         key = action.key_input(['f1','f2'])
+        self.close(self.root)
 
 
     def screen(self):
@@ -113,8 +116,8 @@ class MyThread:
 
     def textinit(self, *region):
         self.local.textbox = self.__display.request('Back', *region, owner=self.root)
-        self.local.tregion1 = region[0], region[1], region[2], 25
-        self.local.tregion2 = region[0], region[1]+25, region[2], 25
+        self.local.tregion1 = region[0], region[1],              region[2], region[3]//2
+        self.local.tregion2 = region[0], region[1]+region[3]//2, region[2], region[3]//2
         self.local.thwnd1 = self.__display.request('Text', '', *self.local.tregion1, owner=self.local.textbox)
         self.local.thwnd2 = self.__display.request('Text', '', *self.local.tregion2, owner=self.local.textbox)
         mt.local.state = ""
@@ -152,6 +155,21 @@ class MyThread:
             if key not in self.__sync:
                 self.__sync[key] = Syncronize(n)
         self.__sync[key].wait(timeout)
+
+    def send(self, uuid, key, message):
+        with LockX(self.__message_lock):
+            if uuid not in self.__message:
+                self.__message[uuid] = {}
+            self.__message[uuid][key] = message
+
+    def receive(self, uuid, key):
+        with LockX(self.__message_lock):
+            if uuid not in self.__message:
+                return None
+            if key not in self.__message[uuid]:
+                return None
+            message = self.__message[uuid][key]
+        return message
 
 mt:MyThread
 
@@ -204,21 +222,37 @@ def controller(thread_id, q:queue.Queue):
     time.sleep(1)
     mt.print(f'start thread id = {thread_id}', state='DEBUG')
     mt.local.thread_id = thread_id
-    mt.local.position = ((np.array([0.,0.]),np.array([np.inf,np.inf])),
-                         (np.array([-615.,-150.]),np.array([0.01,0.01])),
-                         (np.array([-615., 360.]),np.array([0.01,0.01])),
-                         (np.array([  15.,-150.]),np.array([0.01,0.01])),
-                         (np.array([  15., 360.]),np.array([0.01,0.01])),
-                         (np.array([ 650.,-150.]),np.array([0.01,0.01])),
-                         (np.array([ 650., 360.]),np.array([0.01,0.01])))[thread_id]
-    mt.local.scale = (50,44,44,44,44,44,44)[thread_id]
-    region = (( 580,110,730,50),
-              (  10,470,635,50),
-              (  10,990,635,50),
-              ( 645,470,635,50),
-              ( 645,990,635,50),
-              (1280,470,635,50),
-              (1280,990,635,50))[thread_id]
+    mt.local.position = (
+                            (np.array([0.,0.]),np.array([np.inf,np.inf])),
+                            (np.array([-711., -84.]),np.array([0.01,0.01])),
+                            (np.array([-711., 266.]),np.array([0.01,0.01])),
+                            (np.array([-711., 616.]),np.array([0.01,0.01])),
+                            (np.array([-230., -84.]),np.array([0.01,0.01])),
+                            (np.array([-230., 266.]),np.array([0.01,0.01])),
+                            (np.array([-230., 616.]),np.array([0.01,0.01])),
+                            (np.array([ 251., -84.]),np.array([0.01,0.01])),
+                            (np.array([ 251., 266.]),np.array([0.01,0.01])),
+                            (np.array([ 251., 616.]),np.array([0.01,0.01])),
+                            (np.array([ 732., -84.]),np.array([0.01,0.01])),
+                            (np.array([ 732., 266.]),np.array([0.01,0.01])),
+                            (np.array([ 732., 616.]),np.array([0.01,0.01]))
+                        )[thread_id]
+    mt.local.scale = (50,50,50,50,50,50,50,50,50,50,50,50,50,50)[thread_id]
+    region = (
+                ( 711, 85,400,30),
+                (   0,  0,400,30),
+                (   0,350,400,30),
+                (   0,700,400,30),
+                ( 481,  0,400,30),
+                ( 481,350,400,30),
+                ( 481,700,400,30),
+                ( 962,  0,400,30),
+                ( 962,350,400,30),
+                ( 962,700,400,30),
+                (1443,  0,400,30),
+                (1443,350,400,30),
+                (1443,700,400,30),
+              )[thread_id]
     mt.textinit(*region)
     while 1:
         try:

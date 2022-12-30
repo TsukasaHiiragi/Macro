@@ -188,6 +188,7 @@ class SelectState(State):
             selected = usr_args[self.__key]
         if selected not in self.__choices:
             return self.next()
+        self.print(f'{selected} Selected')
         return self.__choices[selected]
 
     def extend(self, str):
@@ -380,11 +381,11 @@ class StateDecoder(json.JSONDecoder):
         act = action.ActionDecoder().object_hook(o)
         if act: return act
 
-def openwindow(exe,id,user):
+def openwindow(exe,id):
     subprocess.run(
         ["start",
         "C:/PROGRA~1/Google/Chrome/Application/chrome.exe",
-        f"--user-data-dir=C:/{user}0{id}"]
+        f"--user-data-dir=C:/tsukasa{id:0=2d}"]
         ,shell=True)
 
 class Executer:
@@ -397,8 +398,9 @@ class Executer:
         self.act_cache = {}
         self.sym_cache = {}
         self.timer = None
+        self.error = False
 
-    def forward(self, timeout):
+    def forward(self, timeout, root):
         self.path = self.state.forward(self.usr_args, self.sys_args, self.act_cache, self.sym_cache)
         if self.path is None: return
         if self.path in self.trigger:
@@ -406,22 +408,37 @@ class Executer:
             func(self, *args, **kwargs)
         
         if self.timer.timeout(timeout):
-            self.timer = utility.Timer()
-            id = mythread.mt.local.thread_id
-            scale = mythread.mt.local.scale
-            position = mythread.mt.local.position
-            with mythread.mt.screen(), mythread.mt.mouse(), mythread.mt.disc():
-                mythread.mt.local.thread_id = 0
-                mythread.mt.local.scale = 50
-                mythread.mt.local.position = (np.array([0.,0.]),np.array([np.inf,np.inf]))
+            if root:
+                id = mythread.mt.local.thread_id
+                scale = mythread.mt.local.scale
+                position = mythread.mt.local.position
+                with mythread.mt.screen(), mythread.mt.mouse(), mythread.mt.disc():
+                    mythread.mt.local.thread_id = 0
+                    mythread.mt.local.scale = 50
+                    mythread.mt.local.position = (np.array([0.,0.]),np.array([np.inf,np.inf]))
+                    exe = Executer()
+                    exe.set_trigger(f'restore\\id{id}\\open.dmy.stt.json',openwindow,id)
+                    exe.run(f'restore\\id{id}\\head.dmy.stt.json',timeout=None)
+                mythread.mt.local.thread_id = id
+                mythread.mt.local.scale = scale
+                mythread.mt.local.position = position
                 exe = Executer()
-                exe.set_trigger(f'restore\\id{id}\\open.dmy.stt.json',openwindow,id,'tfall')
-                exe.run(f'restore\\id{id}\\head.dmy.stt.json',timeout=None)
-            mythread.mt.local.thread_id = id
-            mythread.mt.local.scale = scale
-            mythread.mt.local.position = position
-            exe.run('restore\\closemain.dmy.stt.json',timeout=None)
-            self.path = 'page\\head.dmy.stt.json'
+                exe.run('restore\\closemain.dmy.stt.json',timeout=None)
+                exe = Executer()
+                exe.run('abandon\\head.dmy.stt.json',timeout=None)
+                if 'n_try' not in self.sys_args:
+                    self.sys_args['n_try'] = 0
+                self.sys_args['n_try'] += 1
+                if 'trial' not in self.sys_args or self.sys_args['n_try'] >= self.sys_args['trial']:
+                    self.path = None
+                    return
+                else:
+                    self.path = 'page\\head.dmy.stt.json'
+                self.timer = utility.Timer()
+            else:
+                self.path = None
+                self.error = True
+                return
 
         if self.path in self.cache:
             self.state = self.cache[self.path]
@@ -429,7 +446,7 @@ class Executer:
             self.state = State.load(self.path)
             self.cache[self.path] = self.state 
 
-    def run(self, initial, timeout=1800, **usr_args):
+    def run(self, initial, timeout=1200, root=True, **usr_args):
         self.path = '__main__'
         self.usr_args = usr_args
         if initial in self.trigger:
@@ -438,7 +455,8 @@ class Executer:
         self.state = State.load(initial)
         self.timer = utility.Timer()
         while self.path:
-            self.forward(timeout)
+            self.forward(timeout,root)
+        return self.error
 
     def reset(self):
         self.timer = utility.Timer()

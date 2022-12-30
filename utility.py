@@ -10,8 +10,7 @@ def unique_name(name,ext=''):
     return f"{name}{i}"
 
 def path_to_state():
-    
-    return 'C:\\Users\\miyas\\Macro\\state'
+    return 'C:\\Users\\tsuka\\gitrepo\\Macro\\state'
 
 class OpenX:
     def __init__(self, file, mode):

@@ -22,5 +22,6 @@ while 1:
     monitor.start()
     if monitor.x is not None:
         print(monitor.x,monitor.y)
+        pyautogui.moveTo(monitor.x,monitor.y) 
     else:
         break
