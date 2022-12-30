@@ -12,49 +12,30 @@ def present():
     exe.run('present\\head.dmy.stt.json', timeout=None)
 
 def regular(qs):
-    attrs = ['ray','dark','fire','aqua','wind','volt',]
-    for i in range(6):
-        for attr in attrs:
-            qs[i].put(mythread.Function(quest, i+1, f'raid\\disa\\ex\\{attr}', 1, f'disa{i}', 1))
-        for attr in attrs:
-            qs[i].put(mythread.Function(quest, i+1, f'raid\\disa\\st\\{attr}', 1, f'disa{i}', 1))     
+    attrs = ['fire','aqua','wind','volt','ray','dark']
+    for attr in attrs:
+        disa(qs, attr)
+    for attr in attrs:
+        catas_ult(qs, attr)
+    for attr in attrs:
+        catas_rag(qs, attr)
+    # attrs = ['wind','volt','ray','dark']
+    # for attr in attrs:
+    #     orympia(qs, attr)
     
-    for i in range(6):
-        for attr in attrs:
-            for j in range(6):
-                if i == j:
-                    qs[i].put(
-                        mythread.Function(
-                            quest,i+1,f'raid\\catas\\ult\\{attr}',3,'uuid',6))
-                else:
-                    qs[i].put(
-                        mythread.Function(
-                            rescue,i+1,f'raid\\catas\\ult\\{attr}',3,'uuid',6))
-
-def hyperion(qs):
-    for i in range(6):
-        for j in range(6):
+    
+    
+def highlevel(qs, name, party_id=None):
+    for i in range(12):
+        for j in range(12):
             if i == j:
                 qs[i].put(
                     mythread.Function(
-                        quest,i+1,'raid\\titanhunt\\hyperion',1,'uuid',6,party_name='ray\\deffense'))
+                        quest,i+1,name,1,f'{name}{j}',12,party_id=party_id))
             else:
                 qs[i].put(
                     mythread.Function(
-                        rescue,i+1,'raid\\titanhunt\\hyperion',1,'uuid',6,party_name='ray\\deffense'))
-
-def highlevel(qs, name, party_name=None,party_names=None):
-    if party_names is None: party_names = [party_name]*6
-    for i in range(6):
-        for j in range(6):
-            if i == j:
-                qs[i].put(
-                    mythread.Function(
-                        quest,i+1,name,1,'uuid',6,party_name=party_names[i]))
-            else:
-                qs[i].put(
-                    mythread.Function(
-                        rescue,i+1,name,1,'uuid',6,party_name=party_names[i]))
+                        rescue,i+1,name,1,f'{name}{j}',12,party_id=party_id))
 
 def raid_rag(qs):
     for i in range(3):
@@ -65,21 +46,56 @@ def raid_rag(qs):
 
 def raid_ex(qs):
     for i in range(6):
-        qs[i].put(mythread.Function(quest,  i+1, 'event\\raid\\ex', 150, f'raid_ex{i}', 1, 
+        qs[i].put(mythread.Function(quest,  i+1, f'event\\raid\\ex{i}', 150, f'raid_ex{i}', 1, 
                                     ability_name='aqua\\ability\\1'))
         
-def orympia(qs, attr, tries=3, party_name=None, ability_name=None):
+def orympia(qs, attr):
     for i in range(6):
         for _ in range(1):
             for j in range(6):
                 if i == j:
                     qs[i].put(
                         mythread.Function(
-                            quest,i+1,f'raid\\orympia\\rag\\{attr}',tries,'uuid',6,party_name=party_name,ability_name=ability_name))
+                            quest,i+1,f'raid\\orympia\\rag\\{attr}',3,f'orympia\\rag\\{attr}{j}',6,party_id=10,surpport='phantom'))
                 else:
                     qs[i].put(
                         mythread.Function(
-                            rescue,i+1,f'raid\\orympia\\rag\\{attr}',tries,'uuid',6,party_name=party_name,ability_name=ability_name))
+                            rescue,i+1,f'raid\\orympia\\rag\\{attr}',3,f'orympia\\rag\\{attr}{j}',6,party_id=10,surpport='phantom'))
+    for i in range(6,12):
+        for _ in range(1):
+            for j in range(6,12):
+                if i == j:
+                    qs[i].put(
+                        mythread.Function(
+                            quest,i+1,f'raid\\orympia\\rag\\{attr}',3,f'orympia\\rag\\{attr}{j}',6,party_id=8,ability_name='media'))
+                else:
+                    qs[i].put(
+                        mythread.Function(
+                            rescue,i+1,f'raid\\orympia\\rag\\{attr}',3,f'orympia\\rag\\{attr}{j}',6,party_id=8,ability_name='media'))
+
+def orympia_phantom(qs):
+    for i in range(6):
+        qs[i].put(
+            mythread.Function(
+                quest,i+1,f'raid\\orympia\\rag\\phantom',2,f'orympia\\rag\\phantom{i}',7,party_id=8,surpport='phantom'))
+
+        for j in range(6,12):
+            qs[j].put(
+                mythread.Function(
+                    rescue,j+1,f'raid\\orympia\\rag\\phantom',2,f'orympia\\rag\\phantom{i}',7,ability_name='bursttime'))
+
+    for i in range(6,12):
+        for j in range(6,12):
+            if i == j:
+                qs[i].put(
+                    mythread.Function(
+                        quest,i+1,f'raid\\orympia\\rag\\phantom',2,f'orympia\\rag\\phantom{j}',6,ability_name='bursttime'))
+            else:
+                qs[i].put(
+                    mythread.Function(
+                        rescue,i+1,f'raid\\orympia\\rag\\phantom',2,f'orympia\\rag\\phantom{j}',6,ability_name='bursttime'))
+
+    
 
 def catas(qs, level, attr, party_name=None, ability_name=None):
     for i in range(6):
@@ -87,29 +103,66 @@ def catas(qs, level, attr, party_name=None, ability_name=None):
             if i == j:
                 qs[i].put(
                     mythread.Function(
-                        quest,i+1,f'raid\\catas\\{level}\\{attr}',3,'uuid',6,party_name=party_name,ability_name=ability_name))
+                        quest,i+1,f'raid\\catas\\{level}\\{attr}',3,f'catas\\{level}\\{attr}{j}',6,party_name=party_name,ability_name=ability_name))
             else:
                 qs[i].put(
                     mythread.Function(
-                        rescue,i+1,f'raid\\catas\\{level}\\{attr}',3,'uuid',6,party_name=party_name,ability_name=ability_name))
+                        rescue,i+1,f'raid\\catas\\{level}\\{attr}',3,f'catas\\{level}\\{attr}{j}',6,party_name=party_name,ability_name=ability_name))
+
+def disa(qs, attr):
+    for i in range(12):
+        qs[i].put(mythread.Function(quest, i+1, f'raid\\disa\\ex\\{attr}', 1, f'disa_ex{i}', 1, party_id=7))
+        qs[i].put(mythread.Function(quest, i+1, f'raid\\disa\\st\\{attr}', 1, f'disa_st{i}', 1, party_id=7)) 
+
+def catas_ult(qs, attr):
+    for i in range(12):
+        qs[i].put(mythread.Function(quest,i+1,f'raid\\catas\\ult\\{attr}',1,f'catas\\ult\\{attr}{i}',1,party_id=9,ability_name='burst',surpport='phantom'))
 
 def catas_rag(qs, attr):
-    for i in range(3):
-        for j in range(3):
+    for i in range(2):
+        for j in range(2):
             if i == j:
-                qs[2*i].put(
+                qs[3*i].put(
                     mythread.Function(
-                        quest,2*i+1,f'raid\\catas\\rag\\{attr}',3,'uuid1',3,ability_name=f'catas\\rag\\{attr}'))
-                qs[2*i+1].put(
+                        quest,3*i+1,f'raid\\catas\\rag\\{attr}',3,f'catas\\rag\\{attr}{3*j}',2,party_id=9,ability_name=f'catas\\rag\\{attr}',surpport='phantom'))
+                qs[3*i+1].put(
                     mythread.Function(
-                        quest,2*i+2,f'raid\\catas\\rag\\{attr}',3,'uuid2',3,ability_name=f'catas\\rag\\{attr}'))
+                        quest,3*i+2,f'raid\\catas\\rag\\{attr}',3,f'catas\\rag\\{attr}{3*j+1}',2,party_id=9,ability_name=f'catas\\rag\\{attr}',surpport='phantom'))
+                qs[3*i+2].put(
+                    mythread.Function(
+                        quest,3*i+3,f'raid\\catas\\rag\\{attr}',3,f'catas\\rag\\{attr}{3*j+2}',2,party_id=9,ability_name=f'catas\\rag\\{attr}',surpport='phantom'))
             else:
-                qs[2*i].put(
+                qs[3*i].put(
                     mythread.Function(
-                        rescue,2*i+1,f'raid\\catas\\rag\\{attr}',3,'uuid1',3,ability_name=f'catas\\rag\\{attr}'))
-                qs[2*i+1].put(
+                        rescue,3*i+1,f'raid\\catas\\rag\\{attr}',3,f'catas\\rag\\{attr}{3*j}',2,party_id=9,ability_name=f'catas\\rag\\{attr}',surpport='phantom'))
+                qs[3*i+1].put(
                     mythread.Function(
-                        rescue,2*i+2,f'raid\\catas\\rag\\{attr}',3,'uuid2',3,ability_name=f'catas\\rag\\{attr}'))
+                        rescue,3*i+2,f'raid\\catas\\rag\\{attr}',3,f'catas\\rag\\{attr}{3*j+1}',2,party_id=9,ability_name=f'catas\\rag\\{attr}',surpport='phantom'))
+                qs[3*i+2].put(
+                    mythread.Function(
+                        rescue,3*i+3,f'raid\\catas\\rag\\{attr}',3,f'catas\\rag\\{attr}{3*j+2}',2,party_id=9,ability_name=f'catas\\rag\\{attr}',surpport='phantom'))
+    for i in range(2,4):
+        for j in range(2,4):
+            if i == j:
+                qs[3*i].put(
+                    mythread.Function(
+                        quest,3*i+1,f'raid\\catas\\rag\\{attr}',3,f'catas\\rag\\{attr}{3*j}',2,party_id=9,ability_name=f'catas\\rag\\{attr}',surpport='phantom'))
+                qs[3*i+1].put(
+                    mythread.Function(
+                        quest,3*i+2,f'raid\\catas\\rag\\{attr}',3,f'catas\\rag\\{attr}{3*j+1}',2,party_id=9,ability_name=f'catas\\rag\\{attr}',surpport='phantom'))
+                qs[3*i+2].put(
+                    mythread.Function(
+                        quest,3*i+3,f'raid\\catas\\rag\\{attr}',3,f'catas\\rag\\{attr}{3*j+2}',2,party_id=9,ability_name=f'catas\\rag\\{attr}',surpport='phantom'))
+            else:
+                qs[3*i].put(
+                    mythread.Function(
+                        rescue,3*i+1,f'raid\\catas\\rag\\{attr}',3,f'catas\\rag\\{attr}{3*j}',2,party_id=9,ability_name=f'catas\\rag\\{attr}',surpport='phantom'))
+                qs[3*i+1].put(
+                    mythread.Function(
+                        rescue,3*i+2,f'raid\\catas\\rag\\{attr}',3,f'catas\\rag\\{attr}{3*j+1}',2,party_id=9,ability_name=f'catas\\rag\\{attr}',surpport='phantom'))
+                qs[3*i+2].put(
+                    mythread.Function(
+                        rescue,3*i+3,f'raid\\catas\\rag\\{attr}',3,f'catas\\rag\\{attr}{3*j+2}',2,party_id=9,ability_name=f'catas\\rag\\{attr}',surpport='phantom'))
 
 
 """
@@ -129,92 +182,94 @@ def catas(qs):
                     party_name='aqua\\attack', ability_name=f'aqua\\burst\\bursttime\\{enemy}'))
 """
 def dateline(qs):
-    for i in range(6):
+    for i in range(12):
         qs[i].put(mythread.Function(wait, 5))
 
-def pop(qs):
-    for i in range(6):
+def pop(qs,start,stop):
+    for i in range(start,stop):
         qs[i].get_nowait()
 
 def init():
-    qs = [None]*6
-    for i in range(6):
+    qs = [None]*12
+    for i in range(12):
         qs[i] = queue.Queue()
     return qs
         
 def solo(qs, name, trial):
-    for i in range(6):
+    for i in range(12):
         qs[i].put(mythread.Function(quest,i+1,name,trial,f'{name}_{i}',1))
+
+def daily(qs):
+    for i in range(6):
+        qs[i].put(mythread.Function(quest,i+1,'acce\\pos1',3,f'acce_{i}',1))
+    for i in range(6,12):
+        qs[i].put(mythread.Function(quest,i+1,'acce\\pos2',3,f'acce_{i}',1))
     
 
 if __name__=="__main__":
     qs = init()
     regular(qs)
-    # solo(qs, 'attr\\all', 100)
-    # orympia(qs, 'fire', 3)
-    # orympia(qs, 'phantom', 1)
-    # dateline(qs)
-    # catas(qs, 'rag', 'fire')
-    # regular(qs)
-    
-    # epic = init()
-    # solo(epic,'epic',20)
     
     exp = init()
     solo(exp,'item\\exp',10)
     
-    # advent = init()
-    # solo(advent,'advent\\rag',10)
+    advent = init()
+    solo(advent,'event\\advent\\ult',2)
     
-    # new = queue.Queue()
-    # new.put(mythread.Function(restore,6))
-    
-    # harem = init()
-    # for i in range(6):
-    #     harem[i].put(mythread.Function(episode))
-    
-    # tmp = queue.Queue()
-    # tmp.put(mythread.Function(quest,2,'tmp',1,'uuid',1))
-    
-    # event = init()
-    # raid_rag(event)
-    
-    qs = init()
-    for i in range(3):
-        qs[i*2  ].put(mythread.Function(quest,i*2+1,f'event\\union\\main{i+1}',200,'uuid',1))
-        qs[i*2+1].put(mythread.Function(quest,i*2+2,f'event\\union\\main{i+1}',200,'uuid',1))
     
     event = init()
-    for i in range(6):
-        event[i].put(mythread.Function(quest,i+1,f'event\\advent\\rag',85,'uuid',1))
-    
-    qs = init()
-    catas_rag(qs,'fire')
-    catas_rag(qs,'aqua')
-    catas_rag(qs,'wind')
-    catas_rag(qs,'volt')
-    catas_rag(qs,'ray')
-    catas_rag(qs,'dark')
-    orympia(qs,'volt',ability_name='media')
-    orympia(qs,'ray',ability_name='media')
-    orympia(qs,'dark',ability_name='media')
-    orympia(qs,'wind',ability_name='media')
-    orympia(qs,'aqua',ability_name='media')
-    orympia(qs,'fire',ability_name='media')
+    # for i in range(6,12):
+    #     event[i].put(mythread.Function(quest,i+1,f'event\\raid\\ex',2000,'event',1))
+    # for i in range(6):
+    #     event[i].put(mythread.Function(quest,i+1,f'event\\raid\\rag',2000,'event',1,ability_name='event\\raid\\rag'))
+    # for i in range(6):
+    #     event[i].put(mythread.Function(present))
 
     
+    union = init()
+    for i in range(12):
+        union[i].put(mythread.Function(quest,i+1,f'event\\union\\main{i%6+1}',127,'uuid',1))
+    for i in range(12):
+        union[i].put(mythread.Function(quest,i+1,f'event\\union\\main{i%3+1}',400,'uuid',1))
+    
+    hl = init()
+
+    highlevel(hl,'raid\\orympia\\plus\\ray')
+    highlevel(hl,'raid\\orympia\\plus\\volt')
+    highlevel(hl,'raid\\orympia\\plus\\dark')
+    dateline(hl)
+    orympia_phantom(hl)
+    regular(hl)
+    highlevel(hl,'raid\\beast\\aqua')
+    highlevel(hl,'raid\\beast\\fire')
+    highlevel(hl,'raid\\beast\\dark')
+    highlevel(hl,'raid\\beast\\volt')
+    highlevel(hl,'raid\\orympia\\plus\\fire')
+    highlevel(hl,'raid\\orympia\\plus\\aqua')
+    highlevel(hl,'raid\\orympia\\plus\\ray')
+    highlevel(hl,'raid\\orympia\\plus\\volt')
+    highlevel(hl,'raid\\orympia\\plus\\dark')
+
+    tmp =init()
+    daily(tmp)
+    
+    
     epic = init()
-    for i in range(6):
-        epic[i].put(mythread.Function(quest,i+1,'epic',33,'uuid',1))
+    for i in range(6,12):
+        epic[i].put(mythread.Function(quest,i+1,'epic',25,f'epic{i}',1))
     
     
     q = queue.Queue()
-    q.put(mythread.Function(quest,0,'epic',1,'uuid',1,ability_name='media'))
-    
-    s = init()
-    for i in range(6):
-        s[i].put(mythread.Function(start,i+1,'tfall'))
+    q.put(mythread.Function(mythread.Function(quest,4,'acce\\pos2',1,'uuid',1)))
 
-    mythread.mt = mythread.MyThread(qs=qs)
+    w = queue.Queue()
+    w.put(mythread.Function(mythread.Function(work)))
+
+
+    s = init()
+    for i in range(12):
+        s[i].put(mythread.Function(restore,i+1))
+
+    mythread.mt = mythread.MyThread(qs=tmp)
     mythread.mt.start()
     

@@ -11,7 +11,7 @@ import utility
 import action
 import image
 
-def quest(id, name, trial, key, members, party_name=None, ability_name=None):
+def quest(id, name, trial, key, members, party_id=None, ability_name=None, surpport=None):
     path = os.path.join('quest',f'{name}.qst.json')
     if os.path.exists(path):
         with utility.openx(path, 'rt') as f:
@@ -19,17 +19,20 @@ def quest(id, name, trial, key, members, party_name=None, ability_name=None):
     else: args = {}
     mythread.mt.text(trial=(0,trial))
     exe = Executer()
+    exe.sys_args['trial'] = trial
     exe.sys_args['battle\\host1.slc.stt.json'] = 'host'
     exe.sys_args['battle\\host2.slc.stt.json'] = 'host'
     exe.sys_args['restore\\battle\\host1.slc.stt.json'] = 'host'
     exe.sys_args['restore\\battle\\host2.slc.stt.json'] = 'host'
     exe.sys_args['battle\\auto.slc.stt.json'] = 'changed'
     exe.set_trigger('quest\\partyselect.dmy.stt.json', ready, key=key, members=members)
+    exe.set_trigger('quest\\partyselect1.dmy.stt.json', send, uuid=key, key='battle', message='stay')
     exe.set_trigger('battle\\copy.man.stt.json', cripboard_aquire)
     exe.set_trigger('battle\\copy.dmy.stt.json', syncronize, key=f'{key}_crip_aquire', members=members)
     exe.set_trigger('battle\\syncronize.dmy.stt.json', syncronize, key=f'{key}_crip_release', members=members)
     exe.set_trigger('battle\\release.dmy.stt.json', cripboard_release)
     exe.set_trigger('battle\\isburst.slc.stt.json', mode, changed=False)
+    exe.set_trigger('battle\\receive.slc.stt.json', receive, name='battle\\receive.slc.stt.json', uuid=key, key='battle')
     exe.set_trigger('ability\\auto\\single.man.stt.json', mode, changed=True)
     exe.set_trigger('ability\\auto\\double.man.stt.json', mode, changed=True)
 
@@ -38,30 +41,31 @@ def quest(id, name, trial, key, members, party_name=None, ability_name=None):
     exe.set_trigger('restore\\battle\\syncronize.dmy.stt.json', syncronize, key=f'{key}_crip_release', members=members)
     exe.set_trigger('restore\\battle\\release.man.stt.json', cripboard_release)
     
-    exe.set_trigger('quest\\result.dmy.stt.json', counter, trial=trial)
-    exe.set_trigger('restore\\result.dmy.stt.json', counter, trial=trial)
-    if 'type' in args and args['type'] == 'orympia':
-        exe.set_trigger('quest\\retry\\start.dmy.stt.json', encount, is_encount=False, id=id, key=key, members=members)
-        exe.set_trigger('quest\\finish\\finish.dmy.stt.json', encount, is_encount=False, id=id, key=key, members=members)
-        exe.set_trigger('quest\\result\\encount.dmy.stt.json', encount, is_encount=True, id=id, key=key, members=members)
-        exe.set_trigger('restore\\result\\potal.dmy.stt.json', encount, is_encount=False, id=id, key=key, members=members)
-        exe.set_trigger('restore\\result\\encount.dmy.stt.json', encount, is_encount=True, id=id, key=key, members=members)
-    exe.set_trigger('quest\\union.dmy.stt.json', syncronize, key='unionresult', members=6)
-    if party_name:
-        exe.set_trigger('quest\\partyselect.man.stt.json', party, name=party_name, id=id)
+    exe.set_trigger('quest\\result.dmy.stt.json', counter)
+    exe.set_trigger('restore\\result.dmy.stt.json', counter)
+    exe.set_trigger('quest\\result1.dmy.stt.json', send, uuid=key, key='battle', message='reload')
+    exe.set_trigger('quest\\union.dmy.stt.json', syncronize, key='unionresult', members=12)
+    exe.sys_args['quest\\partyselect.slc.stt.json'] = f'party{party_id}' if party_id else 'none'
+    exe.sys_args['quest\\start\\surpport.slc.stt.json'] = surpport if surpport else 'none'
     if ability_name:
         exe.set_trigger('battle\\ability.dmy.stt.json', ability, name=ability_name, id=id, key=key, members=members)
-    syncronize(None, f'{key}_start', members)
+    syncronize(None, f'{key}_start', members, timeout=None)
     exe.run('page\\head.dmy.stt.json', **args)
     with utility.openx(path, 'wt') as f:
         json.dump(exe.usr_args, f, indent=2)
 
-def counter(exe, trial):
+def send(exe, uuid, key, message):
+    mythread.mt.send(uuid, key, message)
+
+def receive(exe, name, uuid, key):
+    exe.sys_args[name] = mythread.mt.receive(uuid, key)
+
+def counter(exe):
     if 'n_try' not in exe.sys_args:
         exe.sys_args['n_try'] = 0
     exe.sys_args['n_try'] += 1
-    mythread.mt.text(trial=(exe.sys_args['n_try'],trial))
-    if exe.sys_args['n_try'] >= trial:
+    mythread.mt.text(trial=(exe.sys_args['n_try'],exe.sys_args['trial']))
+    if exe.sys_args['n_try'] >= exe.sys_args['trial']:
         exe.sys_args['quest\\result\\count.slc.stt.json'] = 'finish'
         exe.sys_args['quest\\result\\comeback.slc.stt.json'] = 'finish'
         exe.sys_args['restore\\result\\potal.slc.stt.json'] = 'finish'
@@ -79,8 +83,8 @@ def mode(exe, changed):
         exe.sys_args['battle\\auto.slc.stt.json'] = 'stay'
 
 
-def syncronize(exe, key, members):
-    mythread.mt.syncronize(key, members)
+def syncronize(exe, key, members, timeout=180):
+    mythread.mt.syncronize(key, members, timeout)
 
 def cripboard_aquire(exe):
     mythread.mt.cripboard_aquire()
@@ -104,7 +108,7 @@ def ready(exe, key, members):
     mythread.mt.syncronize(f'{key}_ready', members, timeout=None)
     exe.reset()
 
-def rescue(id, name, trial, key, members, party_name=None, ability_name=None):
+def rescue(id, name, trial, key, members, party_id=None, ability_name=None, surpport=None):
     path = os.path.join('quest',f'{name}.qst.json')
     if os.path.exists(path):
         with utility.openx(path, 'rt') as f:
@@ -122,21 +126,23 @@ def rescue(id, name, trial, key, members, party_name=None, ability_name=None):
     exe.sys_args['restore\\battle\\host1.slc.stt.json'] = 'guest'
     exe.sys_args['restore\\battle\\host2.slc.stt.json'] = 'guest'
     exe.sys_args['restore\\result\\potal.slc.stt.json'] = 'back'
+    exe.set_trigger('quest\\result1.dmy.stt.json', send, uuid=key, key='battle', message='reload')
     exe.set_trigger('battle\\isburst.slc.stt.json', mode, changed=False)
+    exe.set_trigger('battle\\receive.slc.stt.json', receive, name='battle\\receive.slc.stt.json', uuid=key, key='battle')
     exe.set_trigger('ability\\auto\\single.man.stt.json', mode, changed=True)
     exe.set_trigger('ability\\auto\\double.man.stt.json', mode, changed=True)
     exe.set_trigger('rescue\\id.dmy.stt.json', ready, key=key, members=members)
     exe.set_trigger('rescue\\crip.dmy.stt.json', syncronize, key=f'{key}_crip_aquire', members=members)
     exe.set_trigger('rescue\\raid.man.stt.json', syncronize, key=f'{key}_crip_release', members=members)
-    if party_name:
-        exe.set_trigger('quest\\partyselect.man.stt.json', party, name=party_name, id=id)
+    exe.sys_args['quest\\partyselect.slc.stt.json'] = f'party{party_id}' if party_id else 'none'
+    exe.sys_args['quest\\start\\surpport.slc.stt.json'] = surpport if surpport else 'none'
     if ability_name:
         exe.set_trigger('battle\\ability.dmy.stt.json', ability, name=ability_name, id=id, key=key, members=members)
-    syncronize(None, f'{key}_start', members)
+    syncronize(None, f'{key}_start', members, timeout=None)
     for i in range(trial):
         exe.run('page\\head.dmy.stt.json', **args)
-        if 'type' in args and args['type'] == 'orympia':
-            orympia_phantom(id, key, members)
+        # if 'type' in args and args['type'] == 'orympia':
+        #     orympia_phantom(id, key, members)
         mythread.mt.text(trial=(i+1,trial))
 
 def init_ability():
@@ -144,14 +150,15 @@ def init_ability():
     exe.run('ability\\head.dmy.stt.json', chara='chara1')
 
 def ability(exe, name, id, key, members):
-    dir = os.path.join('C:\\Users\\miyas\\Macro\\ability',name,f'{id}')
+    dir = os.path.join('C:\\Users\\tsuka\\gitrepo\\Macro\\ability',name,f'{id}')
     if os.path.exists(os.path.join(dir,'ability.abi.json')):
-        use_ability(name, id, key, members)
+        changed = use_ability(name, id, key, members)
+        if changed: mode(exe, True)
     else:
         set_abi(name, id)
 
 def use_ability(name, id, key, members):
-    dir = os.path.join('C:\\Users\\miyas\\Macro\\ability',name,f'{id}')
+    dir = os.path.join('C:\\Users\\tsuka\\gitrepo\\Macro\\ability',name,f'{id}')
     symbol:image.LeafSymbol = image.Symbol.load(f'ability\\id{id}\\list')
     symbol.image_path = os.path.join(dir,'img','list.png')
     symbol.save(f'ability\\id{id}\\list')
@@ -164,25 +171,28 @@ def use_ability(name, id, key, members):
         abilities = json.load(f)
 
     exe = Executer()
-    exe.run('ability\\pre.dmy.stt.json')
+    if exe.run('ability\\pre.dmy.stt.json', root=False): return
     path = f'ability\\id{id}\\list.slc.stt.json' 
+    changed = False
     for abi in abilities:
         if 'special' in abi:
             if abi['special'] == 'mode':
-                exe.run('ability\\mode.dmy.stt.json', **abi)
+                if exe.run('ability\\mode.dmy.stt.json', root=False, **abi): return
+                changed = True
             elif abi['special'] == 'attack':
-                exe.run(f'ability\\attack.dmy.stt.json', **abi)
+                if exe.run(f'ability\\attack.dmy.stt.json', root=False, **abi): return
                 path = f'ability\\id{id}\\head.dmy.stt.json' 
             elif abi['special'] == 'syncronize':
                 mythread.mt.syncronize(f'{key}_ability', members)
             elif abi['special'] == 'enemy':
-                exe.run('ability\\enemy.dmy.stt.json', **abi)
+                if exe.run('ability\\enemy.dmy.stt.json', root=False, **abi): return
         else:
-            exe.run(path, **abi)
+            if exe.run(path, root=False, **abi): return
             path = f'ability\\id{id}\\scroll\\{abi["chara"]}.slc.stt.json'
+    return changed
 
 def set_abi(name, id):
-    dir = os.path.join('C:\\Users\\miyas\\Macro\\ability',name,f'{id}')
+    dir = os.path.join('C:\\Users\\tsuka\\gitrepo\\Macro\\ability',name,f'{id}')
     with utility.openx(os.path.join(dir,'img','list.png'), 'wt') as f:
         pass
     symbol:image.LeafSymbol = image.Symbol.load('set_abi\\list')
@@ -250,7 +260,7 @@ def init_party():
     exe.run('party\\head.dmy.stt.json')
 
 def party(exe, name, id):
-    dir = os.path.join('C:\\Users\\miyas\\Macro\\party',f'{id}',name)
+    dir = os.path.join('C:\\Users\\tsuka\\gitrepo\\Macro\\party',f'{id}',name)
     if os.path.exists(os.path.join(dir,'party.pty.json')):
         use_party(name, id)
     else:
@@ -258,7 +268,7 @@ def party(exe, name, id):
 
 def use_party(name, id):
     mythread.mt.print(name, state='KEYWORD')
-    dir = os.path.join('C:\\Users\\miyas\\Macro\\party',f'{id}',name)
+    dir = os.path.join('C:\\Users\\tsuka\\gitrepo\\Macro\\party',f'{id}',name)
     symbol:image.LeafSymbol = image.Symbol.load(f'party\\id{id}\\party')
     symbol.image_path = os.path.join(dir,'party.png')
     symbol.save(f'party\\id{id}\\party')
@@ -271,7 +281,7 @@ def use_party(name, id):
 
 def set_party(name, id):
     mythread.mt.print(name, state='KEYWORD')
-    dir = os.path.join('C:\\Users\\miyas\\Macro\\party',f'{id}',name)
+    dir = os.path.join('C:\\Users\\tsuka\\gitrepo\\Macro\\party',f'{id}',name)
     with utility.openx(os.path.join(dir,'party.png'), 'wt') as f:
         pass
     symbol:image.LeafSymbol = image.Symbol.load(f'set_party\\party')
@@ -318,7 +328,7 @@ def story():
     exe = Executer()
     exe.run('story\\head.dmy.stt.json')
 
-def restore(id,user='twinter'):
+def restore(id):
     id = mythread.mt.local.thread_id
     scale = mythread.mt.local.scale
     position = mythread.mt.local.position
@@ -327,14 +337,14 @@ def restore(id,user='twinter'):
         mythread.mt.local.scale = 50
         mythread.mt.local.position = (np.array([0.,0.]),np.array([np.inf,np.inf]))
         exe = Executer()
-        exe.set_trigger(f'restore\\id{id}\\open.dmy.stt.json',openwindow,id,user)
+        exe.set_trigger(f'restore\\id{id}\\open.dmy.stt.json',openwindow,id)
         exe.run(f'restore\\id{id}\\head.dmy.stt.json')
     mythread.mt.local.thread_id = id
     mythread.mt.local.scale = scale
     mythread.mt.local.position = position
-    exe.run('restore\\start.man.stt.json')
+    exe.run('restore\\closemain.dmy.stt.json')
     
-def start(id,user='twinter'):
+def start(id):
     id = mythread.mt.local.thread_id
     scale = mythread.mt.local.scale
     position = mythread.mt.local.position
@@ -343,12 +353,16 @@ def start(id,user='twinter'):
         mythread.mt.local.scale = 50
         mythread.mt.local.position = (np.array([0.,0.]),np.array([np.inf,np.inf]))
         exe = Executer()
-        exe.set_trigger(f'restore\\id{id}\\open.dmy.stt.json',openwindow,id,user)
+        exe.set_trigger(f'restore\\id{id}\\open.dmy.stt.json',openwindow,id)
         exe.run(f'restore\\id{id}\\open.dmy.stt.json')
     mythread.mt.local.thread_id = id
     mythread.mt.local.scale = scale
     mythread.mt.local.position = position
-    exe.run('restore\\start.man.stt.json')
+    exe.run('restore\\closemain.dmy.stt.json')
+
+def abandon():
+    exe = Executer()
+    exe.run('abandon\\head.dmy.stt.json')
 
 def wait(t):
     while datetime.datetime.now().hour < t:
@@ -357,3 +371,7 @@ def wait(t):
 def episode():
     exe = Executer()
     exe.run('episode\\head.dmy.stt.json')
+
+def work():
+    exe = Executer()
+    exe.run('work\\head.dmy.stt.json')

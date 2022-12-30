@@ -1,3 +1,4 @@
+import argparse
 import json
 import os
 import time
@@ -458,6 +459,30 @@ def main():
     print(sym.region)
 
 if __name__=="__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument('id',type=int)
+    args = parser.parse_args()
     root = tk.Tk()
-    app = Capture(master=root)
+    position =(
+            (np.array([0.,0.]),np.array([np.inf,np.inf])),
+            (np.array([-711., -84.]),np.array([0.01,0.01])),
+            (np.array([-711., 266.]),np.array([0.01,0.01])),
+            (np.array([-711., 616.]),np.array([0.01,0.01])),
+            (np.array([-230., -84.]),np.array([0.01,0.01])),
+            (np.array([-230., 266.]),np.array([0.01,0.01])),
+            (np.array([-230., 616.]),np.array([0.01,0.01])),
+            (np.array([ 251., -84.]),np.array([0.01,0.01])),
+            (np.array([ 251., 266.]),np.array([0.01,0.01])),
+            (np.array([ 251., 616.]),np.array([0.01,0.01])),
+            (np.array([ 732., -84.]),np.array([0.01,0.01])),
+            (np.array([ 732., 266.]),np.array([0.01,0.01])),
+            (np.array([ 732., 616.]),np.array([0.01,0.01]))
+        )[args.id][0]
+    app = Capture(master=root,scale=50,position=position)
     app.mainloop()
+    if app.img_crop is not None:
+        img_name = utility.unique_name('sym.png','.png')
+        img_path = f'{img_name}.png'
+        app.img_crop.save(img_path)
+        symbol = LeafSymbol(img_path, app.region)
+        symbol.save(img_path)
