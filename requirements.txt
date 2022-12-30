@@ -1,0 +1,7 @@
+pyautogui
+pywin32
+pynput
+numpy
+mttkinter
+pillow
+opencv-python

@@ -255,17 +255,21 @@ if __name__=="__main__":
     
     
     epic = init()
-    for i in range(6):
-        epic[i].put(mythread.Function(quest,i+1,'epic',33,'uuid',1))
+    for i in range(6,12):
+        epic[i].put(mythread.Function(quest,i+1,'epic',25,f'epic{i}',1))
     
     
     q = queue.Queue()
-    q.put(mythread.Function(quest,0,'epic',1,'uuid',1,ability_name='media'))
-    
+    q.put(mythread.Function(mythread.Function(quest,4,'acce\\pos2',1,'uuid',1)))
+
+    w = queue.Queue()
+    w.put(mythread.Function(mythread.Function(work)))
+
+
     s = init()
     for i in range(12):
         s[i].put(mythread.Function(restore,i+1))
 
-    mythread.mt = mythread.MyThread(qs=qs)
+    mythread.mt = mythread.MyThread(qs=tmp)
     mythread.mt.start()
     

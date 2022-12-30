@@ -532,7 +532,8 @@ def gacha_raid():
 
 def gacha_normal():
     a = Assister('gacha_normal')
-    a.dmy('head').connect(a.man('gacha'))
+    a.dmy('head').connect(a.brn('head'))
+    a.brn('head').connect(a.man('gacha'))
     a.man('gacha').connect(a.brn('gacha'))
     a.brn('gacha').connect(a.man('other'),a.man('gacha'))
     a.man('other').connect(a.brn('other'))
