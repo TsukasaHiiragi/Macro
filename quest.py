@@ -205,16 +205,16 @@ if __name__=="__main__":
     
     epic = init()
     for i in range(6):
-        epic[i].put(mythread.Function(quest,i+1,'epic',33,'uuid',1))
+        epic[i].put(mythread.Function(quest,i+1,'epic',30,'uuid',1))
     
     
     q = queue.Queue()
-    q.put(mythread.Function(quest,0,'epic',1,'uuid',1,ability_name='media'))
+    q.put(mythread.Function(quest,1,'epic',36,'uuid',1))
     
     s = init()
     for i in range(6):
         s[i].put(mythread.Function(start,i+1,'tfall'))
 
-    mythread.mt = mythread.MyThread(qs=qs)
+    mythread.mt = mythread.MyThread(qs=epic)
     mythread.mt.start()
     

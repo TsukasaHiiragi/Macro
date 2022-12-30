@@ -128,7 +128,7 @@ class MainState(State):
                 self.record()
             else:
                 act.exe()
-            act_cache[self.path()] = act
+                act_cache[self.path()] = act
         return self.next()
 
     def connect(self, next):
