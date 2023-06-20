@@ -37,7 +37,7 @@ class IOLogFrame(tk.Frame):
     def __init__(self, master):    
         tk.Frame.__init__(self, master)
         master.title("Log Window")
-        w,h = 700,350
+        w,h = 450,300
         x = self.winfo_screenwidth()-w
         y = self.winfo_screenheight()-h-50
         self.master.geometry(f'{w}x{h}+{x}+{y}')

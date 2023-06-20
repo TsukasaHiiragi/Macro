@@ -9,6 +9,7 @@ class Monitor:
     def start(self):
         with mouse.Listener(on_click=self.click) as mouse_listener:
             mouse_listener.join()
+        del mouse_listener
 
     def click(self, x, y, button, pressed):
         if button.name == 'left':

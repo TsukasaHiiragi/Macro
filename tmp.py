@@ -2,7 +2,7 @@ import glob
 import shutil
 import json
 
-src = 'C:\\Users\\tsuka\\gitrepo\\Macro\\ability\\burst'
+src = 'C:\\Users\\tsuka\\gitrepo\\Macro\\ability\\burst\\full'
 attrs = ['fire','aqua','wind','volt','ray','dark']
 enemies = ['3_2',None,'3_2','2_2','3_2',None]
 

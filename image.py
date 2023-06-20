@@ -109,8 +109,8 @@ class LeafSymbol(Symbol):
         r.scaling(scale/50, mythread.centor)
         r.translation(mu)
         r.spacing(15+3*np.sqrt((1+eta/lam)/eta))
-
-        # mythread.mt.rect(*r.region(), owner=hwnd)
+        if hwnd is not None:
+            mythread.mt.rect(*r.region(), owner=hwnd)
 
         image = Image.open(self.image_path)
         size = int(image.width*scale/50),int(image.height*scale/50)

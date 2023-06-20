@@ -4,6 +4,8 @@ import datetime
 from time import sleep
 
 import numpy as np
+import pyperclip
+import pyautogui
 
 from state import Executer, openwindow
 import mythread
@@ -13,10 +15,10 @@ import image
 
 def quest(id, name, trial, key, members, party_id=None, ability_name=None, surpport=None):
     path = os.path.join('quest',f'{name}.qst.json')
+    args = {}
     if os.path.exists(path):
         with utility.openx(path, 'rt') as f:
             args = json.load(f)
-    else: args = {}
     mythread.mt.text(trial=(0,trial))
     exe = Executer()
     exe.sys_args['trial'] = trial
@@ -27,28 +29,33 @@ def quest(id, name, trial, key, members, party_id=None, ability_name=None, surpp
     exe.sys_args['battle\\auto.slc.stt.json'] = 'changed'
     exe.set_trigger('quest\\partyselect.dmy.stt.json', ready, key=key, members=members)
     exe.set_trigger('quest\\partyselect1.dmy.stt.json', send, uuid=key, key='battle', message='stay')
-    exe.set_trigger('battle\\copy.man.stt.json', cripboard_aquire)
-    exe.set_trigger('battle\\copy.dmy.stt.json', syncronize, key=f'{key}_crip_aquire', members=members)
-    exe.set_trigger('battle\\syncronize.dmy.stt.json', syncronize, key=f'{key}_crip_release', members=members)
-    exe.set_trigger('battle\\release.dmy.stt.json', cripboard_release)
+    exe.set_trigger('battle\\clip_aquire.dmy.stt.json', clipboard_aquire)
+    exe.set_trigger('battle\\send.dmy.stt.json', copy, uuid=key, key='raid_id')
+    exe.set_trigger('battle\\clip_release.dmy.stt.json', clipboard_release)
+    exe.set_trigger('battle\\notify.dmy.stt.json', syncronize, key=f'{key}_copy_completed', members=members)
+    exe.set_trigger('battle\\sync.dmy.stt.json', syncronize, key=f'{key}_paste_completed', members=members)
     exe.set_trigger('battle\\isburst.slc.stt.json', mode, changed=False)
     exe.set_trigger('battle\\receive.slc.stt.json', receive, name='battle\\receive.slc.stt.json', uuid=key, key='battle')
+    exe.set_trigger('battle\\wait_battle.dmy.stt.json', wait_battle, offset=12 if members==1 else 20)
     exe.set_trigger('ability\\auto\\single.man.stt.json', mode, changed=True)
     exe.set_trigger('ability\\auto\\double.man.stt.json', mode, changed=True)
 
-    exe.set_trigger('restore\\battle\\copy.man.stt.json', cripboard_aquire)
+    exe.set_trigger('restore\\battle\\copy.man.stt.json', clipboard_aquire)
     exe.set_trigger('restore\\battle\\copy.dmy.stt.json', syncronize, key=f'{key}_crip_aquire', members=members)
     exe.set_trigger('restore\\battle\\syncronize.dmy.stt.json', syncronize, key=f'{key}_crip_release', members=members)
-    exe.set_trigger('restore\\battle\\release.man.stt.json', cripboard_release)
+    exe.set_trigger('restore\\battle\\release.man.stt.json', clipboard_release)
     
     exe.set_trigger('quest\\result.dmy.stt.json', counter)
     exe.set_trigger('restore\\result.dmy.stt.json', counter)
-    exe.set_trigger('quest\\result1.dmy.stt.json', send, uuid=key, key='battle', message='reload')
-    exe.set_trigger('quest\\union.dmy.stt.json', syncronize, key='unionresult', members=12)
+    if 'result' in args and args['result']!='union':
+        exe.set_trigger('quest\\result1.dmy.stt.json', send, uuid=key, key='battle', message='reload')
+    exe.set_trigger('quest\\union.dmy.stt.json', syncronize, key='unionresult', members=2)
     exe.sys_args['quest\\partyselect.slc.stt.json'] = f'party{party_id}' if party_id else 'none'
     exe.sys_args['quest\\start\\surpport.slc.stt.json'] = surpport if surpport else 'none'
     if ability_name:
         exe.set_trigger('battle\\ability.dmy.stt.json', ability, name=ability_name, id=id, key=key, members=members)
+    # exe.set_trigger('quest\\tail.dmy.stt.json', delete_message, uuid=key)
+    # sleep(id*3.5)
     syncronize(None, f'{key}_start', members, timeout=None)
     exe.run('page\\head.dmy.stt.json', **args)
     with utility.openx(path, 'wt') as f:
@@ -60,7 +67,19 @@ def send(exe, uuid, key, message):
 def receive(exe, name, uuid, key):
     exe.sys_args[name] = mythread.mt.receive(uuid, key)
 
-def counter(exe):
+def delete_message(exe, uuid):
+    mythread.mt.delete_message(uuid)
+
+def copy(exe, uuid, key):
+    s = pyperclip.paste()
+    mythread.mt.send(uuid, key, s)
+
+def paste(exe, uuid, key):
+    s = mythread.mt.receive(uuid, key)
+    pyperclip.copy(s)
+
+
+def counter(exe:Executer):
     if 'n_try' not in exe.sys_args:
         exe.sys_args['n_try'] = 0
     exe.sys_args['n_try'] += 1
@@ -75,6 +94,12 @@ def counter(exe):
         exe.sys_args['quest\\result\\comeback.slc.stt.json'] = 'retry'
         exe.sys_args['restore\\result\\potal.slc.stt.json'] = 'retry'
         exe.sys_args['restore\\result\\comeback.slc.stt.json'] = 'retry'
+    
+    d = exe.timer.elapse().total_seconds()
+    if 'battle_mean' in exe.sys_args:
+        exe.sys_args['battle_mean'] = 0.9*exe.sys_args['battle_mean'] + 0.1*d
+    else:
+        exe.sys_args['battle_mean'] = d
 
 def mode(exe, changed):
     if changed:
@@ -84,13 +109,14 @@ def mode(exe, changed):
 
 
 def syncronize(exe, key, members, timeout=180):
-    mythread.mt.syncronize(key, members, timeout)
+    if members >= 2:
+        mythread.mt.syncronize(key, members, timeout)
 
-def cripboard_aquire(exe):
-    mythread.mt.cripboard_aquire()
+def clipboard_aquire(exe):
+    mythread.mt.clipboard_aquire()
 
-def cripboard_release(exe):
-    mythread.mt.cripboard_release()
+def clipboard_release(exe):
+    mythread.mt.clipboard_release()
 
 def encount(exe, is_encount, id, key, members):
     mythread.mt.glob['encount'] = is_encount
@@ -104,9 +130,30 @@ def orympia_phantom(id, key, members):
     if mythread.mt.glob['encount']:
         rescue(id,'raid\\orympia\\rag\\phantom',1,'orympia_phantom',members)
 
-def ready(exe, key, members):
-    mythread.mt.syncronize(f'{key}_ready', members, timeout=None)
+def ready(exe:Executer, key, members):
+    if members >= 2:
+        mythread.mt.syncronize(f'{key}_ready', members, timeout=None)
+    d = exe.timer.elapse()
+    if 'time_mean' in exe.sys_args:
+        if exe.sys_args['time_mean'] is None:
+            mean = d
+        else:
+            mean = 0.9*exe.sys_args['time_mean'] + 0.1*d
+        exe.sys_args['time_mean'] = mean
+        if 'n_try' not in exe.sys_args:
+            exe.sys_args['n_try'] = 0
+        trial = exe.sys_args['trial'] - exe.sys_args['n_try']
+        finish = datetime.datetime.now() + (mean * trial)
+        mythread.mt.text(time=(mean,finish))
+    else:
+        exe.sys_args['time_mean'] = None
+    
     exe.reset()
+
+def wait_battle(exe:Executer, offset):
+    if 'battle_mean' in exe.sys_args:
+        t = exe.sys_args['battle_mean']-offset
+        if t > 0: sleep(t)
 
 def rescue(id, name, trial, key, members, party_id=None, ability_name=None, surpport=None):
     path = os.path.join('quest',f'{name}.qst.json')
@@ -119,6 +166,7 @@ def rescue(id, name, trial, key, members, party_id=None, ability_name=None, surp
     else: args['member'] = 'same'
     mythread.mt.text(trial=(0,trial))
     exe = Executer()
+    exe.sys_args['trial'] = 1
     exe.sys_args['battle\\host1.slc.stt.json'] = 'guest'
     exe.sys_args['battle\\host2.slc.stt.json'] = 'guest'
     exe.sys_args['battle\\auto.slc.stt.json'] = 'changed'
@@ -129,11 +177,15 @@ def rescue(id, name, trial, key, members, party_id=None, ability_name=None, surp
     exe.set_trigger('quest\\result1.dmy.stt.json', send, uuid=key, key='battle', message='reload')
     exe.set_trigger('battle\\isburst.slc.stt.json', mode, changed=False)
     exe.set_trigger('battle\\receive.slc.stt.json', receive, name='battle\\receive.slc.stt.json', uuid=key, key='battle')
+    exe.set_trigger('battle\\wait_battle.dmy.stt.json', wait_battle, offset=15)
     exe.set_trigger('ability\\auto\\single.man.stt.json', mode, changed=True)
     exe.set_trigger('ability\\auto\\double.man.stt.json', mode, changed=True)
     exe.set_trigger('rescue\\id.dmy.stt.json', ready, key=key, members=members)
-    exe.set_trigger('rescue\\crip.dmy.stt.json', syncronize, key=f'{key}_crip_aquire', members=members)
-    exe.set_trigger('rescue\\raid.man.stt.json', syncronize, key=f'{key}_crip_release', members=members)
+    exe.set_trigger('rescue\\clip_aquire.dmy.stt.json', clipboard_aquire)
+    exe.set_trigger('rescue\\notified.dmy.stt.json', syncronize, key=f'{key}_copy_completed', members=members)
+    exe.set_trigger('rescue\\receive.dmy.stt.json', paste, uuid=key, key='raid_id')
+    exe.set_trigger('rescue\\clip_release.dmy.stt.json', clipboard_release)
+    exe.set_trigger('rescue\\raid.man.stt.json', syncronize, key=f'{key}_paste_completed', members=members)
     exe.sys_args['quest\\partyselect.slc.stt.json'] = f'party{party_id}' if party_id else 'none'
     exe.sys_args['quest\\start\\surpport.slc.stt.json'] = surpport if surpport else 'none'
     if ability_name:
@@ -186,6 +238,9 @@ def use_ability(name, id, key, members):
                 mythread.mt.syncronize(f'{key}_ability', members)
             elif abi['special'] == 'enemy':
                 if exe.run('ability\\enemy.dmy.stt.json', root=False, **abi): return
+            elif abi['special'] == 'wait':
+                sleep(abi['interval'])
+                return
         else:
             if exe.run(path, root=False, **abi): return
             path = f'ability\\id{id}\\scroll\\{abi["chara"]}.slc.stt.json'
@@ -328,6 +383,36 @@ def story():
     exe = Executer()
     exe.run('story\\head.dmy.stt.json')
 
+def gacha_normal():
+    exe = Executer()
+    exe.run('gacha_normal\\head.dmy.stt.json')
+
+def click_button(exe, sym_path):
+    mythread.mt.print(f"{exe.path} ", 'DEBUG')
+    symbol:image.Symbol = image.Symbol.load(sym_path)
+    hit = symbol.search(hwnd=None)
+    sleep(1.2)
+    if hit:
+        pos = np.array(hit[:2], dtype=np.float)
+        size = np.array(hit[2:], dtype=np.float)
+        centor = pos+size/2
+        x,y = int(centor[0]),int(centor[1])
+        with mythread.mt.mouse():
+            pyautogui.click(x,y)
+        sleep(1.2)
+
+def receive_present():
+    exe = Executer()
+    for m in ['daily','weekly','event']:
+        m = f'mission\\{m}'
+        exe.set_trigger(f'receive\\{m}\\ok.dmy.stt.json', click_button, sym_path='receive\\ok')
+    for m in ['daily','weekly']:
+        m = f'pass\\{m}'
+        exe.set_trigger(f'receive\\{m}\\ok.dmy.stt.json', click_button, sym_path='receive\\ok')
+    exe.set_trigger(f'receive\\ok.man.stt.json', click_button, sym_path='receive\\ok')
+    exe.run('page\\head.dmy.stt.json', page='receive')
+
+
 def restore(id):
     id = mythread.mt.local.thread_id
     scale = mythread.mt.local.scale
@@ -371,6 +456,10 @@ def wait(t):
 def episode():
     exe = Executer()
     exe.run('episode\\head.dmy.stt.json')
+
+def reduction():
+    exe = Executer()
+    exe.run('reduction\\head.dmy.stt.json', timeout=None)
 
 def work():
     exe = Executer()

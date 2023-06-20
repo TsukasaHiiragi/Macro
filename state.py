@@ -260,8 +260,9 @@ class BranchState(State):
                 self.print(path, state='KEYWORD')
                 nosymbol[alphabets[i]] = path
                 i += 1
-        monitor = action.KeyInput(nosymbol.keys())
-        monitor.start()
+        if mythread.mt.interactive:
+            monitor = action.KeyInput(nosymbol.keys())
+            monitor.start()
         self.print(f'searching...', state='DEBUG')
         # hwnd = mythread.mt.empty() 
         timer = utility.Timer()
@@ -277,7 +278,7 @@ class BranchState(State):
                 hit = symbol.search(hwnd=None)
                 if hit: break
             
-            if not monitor.is_alive(): 
+            if mythread.mt.interactive and not monitor.is_alive(): 
                 if monitor.key == 'esc':
                     # mythread.mt.close(hwnd)
                     print(self.path(), 'terminated')
@@ -296,7 +297,8 @@ class BranchState(State):
             
         # mythread.mt.close(hwnd)
         self.print(f'recognize {State.strip(path)}', state='DEBUG')
-        monitor.stop()
+        if mythread.mt.interactive:
+            monitor.stop()
         # hwnd = mythread.mt.rect(*hit)
         # symbol.save(State.strip(path))
         # time.sleep(0.3)
@@ -397,7 +399,7 @@ class Executer:
         self.cache = {}
         self.act_cache = {}
         self.sym_cache = {}
-        self.timer = None
+        self.timer = utility.Timer()
         self.error = False
 
     def forward(self, timeout, root):
@@ -409,36 +411,11 @@ class Executer:
         
         if self.timer.timeout(timeout):
             if root:
-                id = mythread.mt.local.thread_id
-                scale = mythread.mt.local.scale
-                position = mythread.mt.local.position
-                with mythread.mt.screen(), mythread.mt.mouse(), mythread.mt.disc():
-                    mythread.mt.local.thread_id = 0
-                    mythread.mt.local.scale = 50
-                    mythread.mt.local.position = (np.array([0.,0.]),np.array([np.inf,np.inf]))
-                    exe = Executer()
-                    exe.set_trigger(f'restore\\id{id}\\open.dmy.stt.json',openwindow,id)
-                    exe.run(f'restore\\id{id}\\head.dmy.stt.json',timeout=None)
-                mythread.mt.local.thread_id = id
-                mythread.mt.local.scale = scale
-                mythread.mt.local.position = position
-                exe = Executer()
-                exe.run('restore\\closemain.dmy.stt.json',timeout=None)
-                exe = Executer()
-                exe.run('abandon\\head.dmy.stt.json',timeout=None)
-                if 'n_try' not in self.sys_args:
-                    self.sys_args['n_try'] = 0
-                self.sys_args['n_try'] += 1
-                if 'trial' not in self.sys_args or self.sys_args['n_try'] >= self.sys_args['trial']:
-                    self.path = None
-                    return
-                else:
-                    self.path = 'page\\head.dmy.stt.json'
-                self.timer = utility.Timer()
+                self.abandon()
             else:
                 self.path = None
                 self.error = True
-                return
+        if self.path is None: return
 
         if self.path in self.cache:
             self.state = self.cache[self.path]
@@ -446,20 +423,58 @@ class Executer:
             self.state = State.load(self.path)
             self.cache[self.path] = self.state 
 
-    def run(self, initial, timeout=1200, root=True, **usr_args):
+    def run(self, initial, timeout=480, root=True, **usr_args):
         self.path = '__main__'
         self.usr_args = usr_args
         if initial in self.trigger:
             func, args, kwargs = self.trigger[initial]
             func(self, *args, **kwargs)
         self.state = State.load(initial)
-        self.timer = utility.Timer()
+        self.reset()
         while self.path:
             self.forward(timeout,root)
         return self.error
+    
+    def abandon(self):
+        id = mythread.mt.local.thread_id
+        scale = mythread.mt.local.scale
+        position = mythread.mt.local.position
+        with mythread.mt.screen(), mythread.mt.mouse(), mythread.mt.disc():
+            mythread.mt.local.thread_id = 0
+            mythread.mt.local.scale = 50
+            mythread.mt.local.position = (np.array([0.,0.]),np.array([np.inf,np.inf]))
+            exe = Executer()
+            exe.set_trigger(f'restore\\id{id}\\open.dmy.stt.json',openwindow,id)
+            error = exe.run(f'restore\\id{id}\\head.dmy.stt.json',timeout=180, root=False)
+        mythread.mt.local.thread_id = id
+        mythread.mt.local.scale = scale
+        mythread.mt.local.position = position
+        if error:
+            return self.abandon()
+        exe = Executer()
+        error = exe.run('restore\\closemain.dmy.stt.json',timeout=180, root=False)
+        if error:
+            return self.abandon()
+        exe = Executer()
+        error = exe.run('abandon\\head.dmy.stt.json',timeout=180, root=False)
+        if error:
+            return self.abandon()
+        self.sys_args['battle\\auto.slc.stt.json'] = 'changed'
+        if 'trial' in self.sys_args:
+            if 'n_try' not in self.sys_args:
+                self.sys_args['n_try'] = 0
+            self.sys_args['n_try'] += 1
+            if self.sys_args['n_try'] >= self.sys_args['trial']:
+                self.path = None
+                return
+            else:
+                self.path = 'page\\head.dmy.stt.json'
+        else:
+            self.path = 'page\\head.dmy.stt.json'
+        self.reset()
 
     def reset(self):
-        self.timer = utility.Timer()
+        self.timer.reset()
 
     def set_trigger(self, path, func, *args, **kwargs):
         self.trigger[path] = func, args, kwargs

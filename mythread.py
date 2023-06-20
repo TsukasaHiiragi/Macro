@@ -5,10 +5,14 @@ import mttkinter
 import queue
 import numpy as np
 import win32gui
+import logging
+from logging.handlers import RotatingFileHandler
+import datetime
 
 import log
 import display
 import action
+import utility
             
 rect_max = (0,0,1919,1079)
 centor = np.array([952.5,275.5])
@@ -33,23 +37,27 @@ class Syncronize:
             if self.__count == 0:
                 self.__complete.clear()
                 self.__exit.set()
+                return True
         self.__exit.wait(timeout=5)
+        return False
         
 class MyThread:
-    def __init__(self, q=None, qs=None, id=0):
+    def __init__(self, q=None, qs=None, id=0, timeout=None):
         self.local = threading.local()
         self.glob = {}
         self.__screen_lock = threading.Lock()
         self.__mouse_lock = threading.Lock()
         self.__disc_lock = threading.Lock()
-        self.__cripboard_lock = threading.Lock()
+        self.__clipboard_lock = threading.Lock()
         self.__sync_lock = threading.Lock()
         self.__message_lock = threading.Lock()
         self.__sync:dict[str,Syncronize] = {}
         self.__display = display.Display()
         self.__message = {}
         self.root = None
+        self.timeout = timeout*3600 if timeout is not None else None
         if q:
+            self.interactive = True
             root = tk.Tk()
             root.attributes("-topmost", True)
             self.__logger = log.IOLogFrame(root)
@@ -58,27 +66,52 @@ class MyThread:
                 kwargs={'thread_id':id, 'q':q})
             thread.start()
         if qs:
-            self.__logger = None
+            self.interactive = False
+            self.__logger = logging.getLogger(__name__)
+            self.__logger.setLevel(logging.DEBUG)
+
+            rh = RotatingFileHandler(
+                    r'./log/app.log', 
+                    encoding='utf-8',
+                    maxBytes=1024,
+                    backupCount=3
+                )
+            self.__thread = [None]*len(qs)
+            self.__logger.addHandler(rh)
             for i, q in enumerate(qs):
-                thread = threading.Thread(
+                self.__thread[i] = threading.Thread(
                     target=controller, daemon=True,
                     kwargs={'thread_id':i+1, 'q':q})
-                thread.start()
+                self.__thread[i].start()
     
     def start(self):
         thread = threading.Thread(target=self.__display.mainloop, daemon=True)
         thread.start()
         self.root = self.__display.request('Empty')
         self.local.thread_id = -1
-        if self.__logger:
+        if type(self.__logger) is log.IOLogFrame:
             self.__logger.mainloop()
         else:
-            key = None
-            while key != 'f2':
-                key = action.key_input(['f1','f2'])
-                if key == 'f1':
-                    with self.screen(),self.mouse(),self.disc():
-                        key = action.key_input(['f1','f2'])
+            monitor = action.KeyInput(['f1','f2'])
+            monitor.start()
+            time.sleep(1.0)
+            timer = utility.Timer()
+            while any([th.is_alive() for th in self.__thread]):
+                if not monitor.is_alive():
+                    if monitor.key == 'f1':
+                        with self.screen(),self.mouse(),self.disc():
+                            monitor = action.KeyInput(['f1','f2'])
+                            monitor.start()
+                            time.sleep(1.0)
+                            while monitor.is_alive():
+                                time.sleep(1.0)
+                    if monitor.key == 'f2':
+                        break
+                    monitor = action.KeyInput(['f1','f2'])
+                    monitor.start()
+                if timer.timeout(self.timeout):
+                    break
+                time.sleep(1.0)
         self.close(self.root)
 
 
@@ -100,11 +133,11 @@ class MyThread:
         else:
             return LockX(self.__disc_lock)
 
-    def cripboard_aquire(self):
-        self.__cripboard_lock.acquire()
+    def clipboard_aquire(self):
+        self.__clipboard_lock.acquire()
 
-    def cripboard_release(self):
-        self.__cripboard_lock.release()
+    def clipboard_release(self):
+        self.__clipboard_lock.release()
 
     def empty(self, owner=None):
         if owner is None: owner = self.root
@@ -122,17 +155,18 @@ class MyThread:
         self.local.thwnd2 = self.__display.request('Text', '', *self.local.tregion2, owner=self.local.textbox)
         mt.local.state = ""
         mt.local.trial = (0,0)
+        mt.local.time = (datetime.timedelta(),datetime.datetime.combine(datetime.date.today(),datetime.time()))
         mt.local.member = []
     
-    def text(self, state=None, trial=None, member=None):
+    def text(self, state=None, trial=None, time=None):
         if state: self.local.state = state
         if trial: self.local.trial = trial
-        if member: self.local.member = member.__str__()
+        if time: self.local.time = time
         hwnd1 = self.__display.request("Text", 
             f'{self.local.state}', 
             *self.local.tregion1, owner=self.local.textbox)
         hwnd2 = self.__display.request("Text", 
-            f'trial = {self.local.trial[0]:4d}/{self.local.trial[1]:4d}, member = {self.local.member}',
+            f'trial={self.local.trial[0]:4d}/{self.local.trial[1]:4d}, time={int(self.local.time[0].total_seconds())} ; {self.local.time[1].strftime("%m/%d %H:%M")}',
             *self.local.tregion2, owner=self.local.textbox)
         self.close(self.local.thwnd1)
         self.close(self.local.thwnd2)
@@ -143,8 +177,10 @@ class MyThread:
         self.__display.close(hwnd)
 
     def print(self, str, state='MESSAGE', end='\n'):
-        if self.__logger:
+        if type(self.__logger) is log.IOLogFrame:
             self.__logger.print(str, state=state, end=end)
+        elif type(self.__logger) is logging.Logger:
+            self.__logger.debug(str)
 
     def request(self, gui, **kwargs):
         assert self.__logger is not None
@@ -154,7 +190,8 @@ class MyThread:
         with LockX(self.__sync_lock):
             if key not in self.__sync:
                 self.__sync[key] = Syncronize(n)
-        self.__sync[key].wait(timeout)
+        if self.__sync[key].wait(timeout):
+            del self.__sync[key]
 
     def send(self, uuid, key, message):
         with LockX(self.__message_lock):
@@ -170,6 +207,10 @@ class MyThread:
                 return None
             message = self.__message[uuid][key]
         return message
+    
+    def delete_message(self, uuid):
+        with LockX(self.__message_lock):
+            del self.__message[uuid]
 
 mt:MyThread
 

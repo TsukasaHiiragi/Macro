@@ -5,7 +5,7 @@ import mythread
 
 def page():
     a = Assister('page')
-    names = ['main', 'raid', 'rescue', 'item', 'attr', 'epic', 'advent', 
+    names = ['main', 'raid', 'rescue', 'receive', 'item', 'attr', 'epic', 'advent', 
              'acce', 'guild', 'battlefield', 'event', 'challenge']
     a.dmy('head').connect(a.slc('head'))
     a.slc('head').connect('page',manual=DummyState.open('quest\\head'),
@@ -66,10 +66,15 @@ def rescue():
     a.man('unidentified').connect(a.brn('unidentified'))
     a.brn('unidentified').connect(DummyState.open('restore\\result\\head'), a.man('unidentified'))
     a.man('random').connect(a.brn('head'))
-    a.dmy('id').connect(a.dmy('crip'))
-    a.dmy('crip').connect(a.man('id'))
-    a.man('id').connect(a.brn('id'))
-    a.brn('id').connect(a.man('id'), a.man('raid'))
+    a.dmy('id').connect(a.dmy('notified'))
+    a.dmy('notified').connect(a.dmy('paste'))
+    a.dmy('paste').connect(a.dmy('clip_aquire'))
+    a.dmy('clip_aquire').connect(a.dmy('receive'))
+    a.dmy('receive').connect(a.man('paste'))
+    a.man('paste').connect(a.dmy('clip_release'))
+    a.dmy('clip_release').connect(a.man('join'))
+    a.man('join').connect(a.brn('paste'))
+    a.brn('paste').connect(a.dmy('paste'), a.man('raid'))
     a.man('raid').connect(DummyState.open('quest\\head'))
 
     a.brn('other\\head').connect(a.man('other\\raid'), a.man('other\\random'), a.man('other\\id'))
@@ -122,6 +127,17 @@ def acce():
         **{position:a.man(f'position\\{position}') for position in positions})
     for position in positions: 
         a.man(f'position\\{position}').connect(DummyState.open('quest\\head'))
+    a.save()
+
+def battlefield():
+    a = Assister('battlefield')
+    a.dmy('head').connect(a.slc('head'))
+    a.slc('head').connect('field', weaponbreak=a.man('weaponbreak'),  titanhunt=a.man('titanhunt'))
+    a.man('titanhunt').connect(a.brn('titanhunt'))
+    a.brn('titanhunt').connect(a.slc('level'))
+    a.slc('level').connect('titanhunt', hyperion=a.man('hyperion'), atlas=a.man('atlas'))
+    a.man('hyperion').connect(DummyState.open('quest\\head'))
+    a.man('atlas').connect(DummyState.open('quest\\head'))
     a.save()
 
 def advent():
@@ -224,8 +240,9 @@ def quest():
     for party in range(1,13):
         a.man(f'partyselect\\party{party}').connect(a.man('partyselect'))
     a.man('partyselect').connect(a.brn('partyselect'))
-    a.brn('partyselect').connect(DummyState.open('battle\\head'), a.man('finished'), a.man('partyselect'))
+    a.brn('partyselect').connect(DummyState.open('battle\\head'), a.man('finished'), a.man('partyselect'), a.man('warning'))
     a.man('finished').connect(a.brn('finish'))
+    a.man('warning').connect(a.brn('partyselect'))
 
     a.dmy('result').connect(a.dmy('result1'))
     a.dmy('result1').connect(a.slc('type1'))
@@ -249,10 +266,10 @@ def quest():
     a.man('finish').connect(a.brn('finish'))
     a.man('back').connect(a.brn('finish'))
     names = ['main', 'raid', 'rescue', 'item', 'attr', 'epic', 'advent', 'union',
-             'acce', 'guild', 'battlefield', 'event', 'challenge', 'cross']
+             'acce', 'guild', 'battlefield', 'event', 'challenge', 'cross', 'raid_event']
     a.brn('finish').connect(
-        *[a.dmy(f'finish\\{name}') for name in names], a.man('finish\\friend'), a.man('finish\\reward'), 
-        a.dmy('finish\\mvp'), a.dmy('finish\\rankup'), a.dmy('finish\\aquire'), a.dmy('finish\\count'))
+        a.man('finish\\friend'), a.man('finish\\reward'), a.dmy('finish\\mvp'), a.dmy('finish\\rankup'), 
+        a.dmy('finish\\aquire'), a.dmy('finish\\count'), *[a.dmy(f'finish\\{name}') for name in names])
     a.man('finish\\friend').connect(a.brn('finish'))
     a.man('finish\\reward').connect(a.brn('finish'))
     for name in names: a.dmy(f'finish\\{name}').connect(a.dmy('finish\\finish'))
@@ -264,8 +281,9 @@ def quest():
 
     a.dmy('union').connect(a.man('union\\back'))
     a.man('union\\back').connect(a.brn('union\\back'))
-    a.brn('union\\back').connect(a.slc('union\\scroll\\sc1'),a.man('union\\mvp'),a.man('union\\back'))
+    a.brn('union\\back').connect(a.slc('union\\scroll\\sc1'),a.man('union\\mvp'),a.man('union\\rankup'),a.man('union\\back'))
     a.man('union\\mvp').connect(a.brn('union\\back'))
+    a.man('union\\rankup').connect(a.brn('union\\back'))
     a.slc('union\\scroll\\sc1').connect('scroll', sc1=a.slc('union\\position'), sc2=a.man('union\\scroll\\sc2'))
     a.man('union\\scroll\\sc2').connect(a.slc('union\\scroll\\sc2'))
     a.slc('union\\scroll\\sc2').connect('scroll', sc2=a.slc('union\\position'))
@@ -284,11 +302,14 @@ def battle():
     a.slc('host1').connect(a.slc('host1').path(), host=a.man('multi'), guest=a.dmy('ability'))
     a.man('multi').connect(a.brn('multi'))
     a.brn('multi').connect(a.slc('host2'), exception=a.man('multi'))
-    a.slc('host2').connect(a.slc('host2').path(), host=a.man('copy'), guest=a.man('request'))
-    a.man('copy').connect(a.dmy('copy'))
-    a.dmy('copy').connect(a.dmy('syncronize'))
-    a.dmy('syncronize').connect(a.dmy('release'))
-    a.dmy('release').connect(a.slc('request'))
+    a.slc('host2').connect(a.slc('host2').path(), host=a.man('create_id'), guest=a.man('request'))
+    a.man('create_id').connect(a.dmy('clip_aquire'))
+    a.dmy('clip_aquire').connect(a.man('copy'))
+    a.man('copy').connect(a.dmy('send'))
+    a.dmy('send').connect(a.dmy('clip_release'))
+    a.dmy('clip_release').connect(a.dmy('notify'))
+    a.dmy('notify').connect(a.dmy('sync'))
+    a.dmy('sync').connect(a.slc('request'))
     a.slc('request').connect('team', multi=a.man('cancel'), random=a.man('request'), union=a.man('check'))
     a.man('cancel').connect(a.dmy('ability'))
     a.man('check').connect(a.man('request'))
@@ -313,28 +334,35 @@ def battle():
     a.slc(f'burst\\off').connect('burst', default=a.man('burst\\default'), off=a.brn('attack'), change=a.brn('attack'))
     a.slc(f'burst\\on').connect('burst', default=a.man('burst\\default'), on=a.brn('attack'))
     a.man('burst\\default').connect(a.brn('burst'))
-    a.brn('attack').connect(a.slc('target'), DummyState.open('quest\\result'))
+    a.brn('attack').connect(a.slc('target'), a.man('next'), DummyState.open('quest\\result'))
     targets = ['target2_1','target2_2','target3_1','target3_2','target3_3']
     a.slc('target').connect('target', default=a.man('attack'), none=a.man('attack'),**{target:a.man(f'target\\{target}') for target in targets})
     for target in targets:
         a.man(f'target\\{target}').connect(a.man('attack'))
-    a.man('attack').connect(a.brn('except'))
-    a.brn('except').connect(a.man('error'), a.slc('target'), a.man('next'), DummyState.open('quest\\result'), a.slc('receive'))
+    a.man('attack').connect(a.brn('except0'))
+    a.brn('except0').connect(a.man('error'), a.slc('target'), DummyState.open('quest\\result'), a.dmy('wait_battle'))
+    a.dmy('wait_battle').connect(a.brn('except'))
+    a.brn('except').connect(a.man('error'), a.slc('target'), DummyState.open('quest\\result'), a.slc('receive'))
+    # a.brn('except').connect(a.man('error'), a.slc('target'), a.man('next'), DummyState.open('quest\\result'), a.slc('receive'))
     a.man('error').connect(a.brn('except'))
     # a.slc('max').connect('burst', default=a.brn('except'), change=a.man('max'))
     # a.man('max').connect(a.brn('max'))
     # a.brn('max').connect(a.dmy('on'), a.dmy('off'), DummyState.open('quest\\result'))
-    # a.dmy('off').connect(a.man('max'))
+    # a.dmy('off').connect(a.man('max'))python 
     # a.dmy('on').connect(a.brn('on'))
     # a.brn('on').connect(a.man('reload'), DummyState.open('quest\\result'))
     # a.man('reload').connect(a.slc('auto'))
     a.man('next').connect(a.brn('next'))
     a.brn('next').connect(a.man('reload'), DummyState.open('quest\\result'))
     a.man('reload').connect(a.brn('except'))
-    a.slc('receive').connect(a.slc('receive').path(),stay=a.man('stay'),reload=a.man('advance'))
+    a.slc('receive').connect(a.slc('receive').path(),stay=a.man('stay'),reload=a.man('advance1'))
     a.man('stay').connect(a.brn('except'))
-    a.man('advance').connect(a.brn('except1'))
-    a.brn('except1').connect(a.man('error'), a.slc('target'), a.man('next'), DummyState.open('quest\\result'), a.dmy('receive'))
+    a.man('advance1').connect(a.brn('except1'))
+    a.brn('except1').connect(a.man('error'), a.slc('target'), a.man('next'), DummyState.open('quest\\result'), a.man('advance2'))
+    a.man('advance2').connect(a.brn('except2'))
+    a.brn('except2').connect(a.man('error'), a.slc('target'), a.man('next'), DummyState.open('quest\\result'), a.man('advance3'))
+    a.man('advance3').connect(a.brn('except3'))
+    a.brn('except3').connect(a.man('error'), a.slc('target'), a.man('next'), DummyState.open('quest\\result'), a.dmy('receive'))
     a.dmy('receive').connect(a.man('reload'))
     a.save()
 
@@ -532,24 +560,69 @@ def gacha_raid():
 
 def gacha_normal():
     a = Assister('gacha_normal')
-    a.dmy('head').connect(a.brn('head'))
-    a.brn('head').connect(a.man('gacha'))
+    a.dmy('head').connect(a.man('gacha'))
     a.man('gacha').connect(a.brn('gacha'))
-    a.brn('gacha').connect(a.man('other'),a.man('gacha'))
+    a.brn('gacha').connect(a.man('other'),exception=a.man('gacha'))
     a.man('other').connect(a.brn('other'))
     a.brn('other').connect(a.man('normal'),a.man('other'))
     a.man('normal').connect(a.brn('normal'))
     a.brn('normal').connect(a.dmy('top'),a.brn('normal'))
     a.dmy('top').connect(a.brn('top'))
-    a.brn('top').connect(a.man('ok'),a.man('potal'),exception=a.man('draw'))
+    a.brn('top').connect(a.man('ok'),a.man('portal'),exception=a.man('draw'))
     a.man('ok').connect(a.brn('top'))
     a.man('draw').connect(a.brn('top'))
     a.man('portal').connect(a.brn('portal'))
-    a.brn('portal').connect(a.dmy('tail'),a.man('potal'))
+    a.brn('portal').connect(a.dmy('tail'),a.man('portal'))
+    a.save()
 
 def receive():
-    a = Assister('receive'):
-    a.dmy('head').connect(a.brn('head'))    
+    a = Assister('receive')
+    a.dmy('head').connect(a.man('return'))
+    a.man('return').connect(a.brn('return'))
+    a.brn('return').connect(a.dmy(f'equipment{0}'))
+    for i,e in enumerate(['weapon','genju','acce']):
+        a.dmy(f'equipment{i}').connect(a.man(e))
+        a.man(e).connect(a.man(f'{e}\\recommend'))
+        a.man(f'{e}\\recommend').connect(a.brn(f'{e}\\recommend'))
+        a.brn(f'{e}\\recommend').connect(a.man(f'{e}\\return'),a.man(f'{e}\\finish'),exception=a.man(f'{e}\\recommend'))
+        a.man(f'{e}\\return').connect(a.brn(f'{e}\\return'))
+        a.brn(f'{e}\\return').connect(a.man(f'{e}\\ok'),a.man(f'{e}\\return'))
+        a.man(f'{e}\\ok').connect(a.brn(f'{e}\\ok'))
+        a.brn(f'{e}\\ok').connect(a.man(f'{e}\\recommend'),a.man(f'{e}\\ok'))
+        a.man(f'{e}\\finish').connect(a.brn(f'{e}\\finish'))
+        a.brn(f'{e}\\finish').connect(a.dmy(f'equipment{i+1}'))
+    a.dmy(f'equipment{3}').connect(a.man('mypage'))
+    a.man('mypage').connect(a.brn('mypage'))
+    a.brn('mypage').connect(a.man('jem'), a.man('mission'), exception=a.man('mypage'))
+    a.man('jem').connect(a.brn('mypage'))
+    a.man('mission').connect(a.brn('mission'))
+    a.brn('mission').connect(a.dmy(f'mission{0}'),a.man('jem'),a.man('mission'))
+    for i,m in enumerate(['daily','weekly','event']):
+        m = f'mission\\{m}'
+        a.dmy(f'mission{i}').connect(a.man(m))
+        a.man(m).connect(a.man(f'{m}\\receive'))
+        a.man(f'{m}\\receive').connect(a.dmy(f'{m}\\ok'))
+        a.dmy(f'{m}\\ok').connect(a.brn(f'{m}\\ok'))
+        a.brn(f'{m}\\ok').connect(a.dmy(f'mission{i+1}'))
+    a.dmy(f'mission{3}').connect(a.dmy(f'pass{0}'))
+    for i,m in enumerate(['daily','weekly']):
+        m = f'pass\\{m}'
+        a.dmy(f'pass{i}').connect(a.man(m))
+        a.man(m).connect(a.man(f'{m}\\receive'))
+        a.man(f'{m}\\receive').connect(a.dmy(f'{m}\\ok'))
+        a.dmy(f'{m}\\ok').connect(a.brn(f'{m}\\ok'))
+        a.brn(f'{m}\\ok').connect(a.man(f'{m}\\cancel'), a.dmy(f'pass{i+1}'))
+        a.man(f'{m}\\cancel').connect(a.brn(f'{m}\\ok'))
+    a.dmy(f'pass{2}').connect(a.man('present'))
+    a.man('present').connect(a.brn('present'))
+    a.brn('present').connect(a.man('tab'), exception=a.man('present'))
+    a.man('tab').connect(a.brn('tab'))
+    a.brn('tab').connect(a.man('receive'), a.man('portal'), exception=a.man('ok'))
+    a.man('receive').connect(a.man('ok'))
+    a.man('ok').connect(a.brn('tab'))
+    a.man('portal').connect(a.brn('portal'))
+    a.brn('portal').connect(a.dmy('tail'))  
+    a.save()  
 
 def present():
     a = Assister('present')
@@ -606,8 +679,9 @@ def restore():
         a.brn(f'id{id}\\open').connect(a.man(f'id{id}\\demado'))
         a.man(f'id{id}\\demado').connect(a.brn(f'id{id}\\demado'))
         a.brn(f'id{id}\\demado').connect(a.man(f'id{id}\\kpro'))
-        a.man(f'id{id}\\kpro').connect(a.brn(f'id{id}\\kpro'))
-        a.brn(f'id{id}\\kpro').connect(a.man(f'id{id}\\closemain'))
+        a.man(f'id{id}\\kpro').connect(a.man(f'id{id}\\closemain'))
+        # a.man(f'id{id}\\kpro').connect(a.brn(f'id{id}\\kpro'))
+        # a.brn(f'id{id}\\kpro').connect(a.man(f'id{id}\\closemain'))
         a.man(f'id{id}\\closemain').connect(a.dmy('tail'))
         
     a.dmy('closemain').connect(a.brn('closemain'))
@@ -615,7 +689,8 @@ def restore():
     a.man('start').connect(a.brn('start'))
     a.brn('start').connect(a.man('ok'), a.dmy('tail'), a.man('start'),exception=a.man('quest'))
     a.man('ok').connect(a.brn('start'))
-    a.man('quest').connect(a.brn('start'))
+    a.man('quest').connect(a.man('quest1'))
+    a.man('quest1').connect(a.brn('start'))
 
     a.dmy('result\\head').connect(a.brn('result\\head'))
     a.brn('result\\head').connect(
@@ -683,9 +758,10 @@ def abandon():
     a.man('battle\\retire1').connect(a.brn('battle\\retire1'))
     a.brn('battle\\retire1').connect(a.man('battle\\ok'), a.man('battle\\retire1'))
     a.man('battle\\ok').connect(a.brn('battle\\ok'))
-    a.brn('battle\\ok').connect(a.dmy('raid'), a.dmy('rescue'), a.man('battle\\ok'))
+    a.brn('battle\\ok').connect(a.dmy('raid'), a.dmy('rescue'), a.dmy('event'), a.man('battle\\ok'))
     a.dmy('raid').connect(a.man('potal1'))
     a.dmy('rescue').connect(a.man('potal1'))
+    a.dmy('event').connect(a.man('potal1'))
     a.man('potal1').connect(a.brn('potal1'))
     a.brn('potal1').connect(a.dmy('potal\\head2'), a.dmy('raid'), a.dmy('rescue'))
 
@@ -726,7 +802,6 @@ def abandon():
     a.brn('item\\potal').connect(a.dmy('potal\\head3'), a.man('item\\potal'))
 
     a.save()
-
 
 def episode():
     a = Assister('episode')
@@ -834,10 +909,16 @@ def episode():
     a.man('3episodes\\pos3\\aquire').connect(a.brn('3episodes\\pos3\\back'))
     a.save()
 
+def reduction():
+    a = Assister('reduction')
+    a.dmy('head').connect(a.man('reduction'))
+    a.man('reduction').connect(a.dmy('head'))
+    a.save()
+
 def work():
     a = Assister('work')
     a.dmy('head').connect(a.brn('head'))
-    names = ['acce','item','attr']
+    names = ['result']
     a.brn('head').connect(*[a.man(name) for name in names])
     for name in names:
         a.man(name).connect(a.brn('head'))
@@ -853,6 +934,7 @@ def tmp():
     acce()
     advent()
     event()
+    battlefield()
     quest()
     battle()
     ability()
@@ -866,6 +948,9 @@ def tmp():
     episode()
     work()
     abandon()
+    gacha_normal()
+    receive()
+    reduction()
 
 if __name__=="__main__":
     q = queue.Queue()

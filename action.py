@@ -295,16 +295,16 @@ class KeyInput:
     def stop(self):
         self.keyboard_listener.stop()
     
-    def join(self):
-        self.keyboard_listener.join()
+    def join(self, timeout=None):
+        self.keyboard_listener.join(timeout=timeout)
 
     def is_alive(self):
         return self.keyboard_listener.is_alive()
 
-def key_input(keys):
+def key_input(keys, timeout=None):
     monitor = KeyInput(keys)
     monitor.start()
-    monitor.join()
+    monitor.join(timeout=timeout)
     return monitor.key
 
 def main():
