@@ -239,7 +239,8 @@ def quest():
     a.slc('partyselect').connect(a.slc('partyselect').path(), none=a.man('partyselect'), **{f'party{party}':a.man(f'partyselect\\party{party}') for party in range(1,13)})
     for party in range(1,13):
         a.man(f'partyselect\\party{party}').connect(a.man('partyselect'))
-    a.man('partyselect').connect(a.brn('partyselect'))
+    a.man('partyselect').connect(a.dmy('lock'))
+    a.dmy('lock').connect(a.brn('partyselect'))
     a.brn('partyselect').connect(DummyState.open('battle\\head'), a.man('finished'), a.man('partyselect'), a.man('warning'))
     a.man('finished').connect(a.brn('finish'))
     a.man('warning').connect(a.brn('partyselect'))

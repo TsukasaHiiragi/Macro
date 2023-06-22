@@ -51,6 +51,7 @@ class MyThread:
         self.__clipboard_lock = threading.Lock()
         self.__sync_lock = threading.Lock()
         self.__message_lock = threading.Lock()
+        self.__quest_lock = threading.Lock()
         self.__sync:dict[str,Syncronize] = {}
         self.__display = display.Display()
         self.__message = {}
@@ -132,6 +133,12 @@ class MyThread:
             return LockX()
         else:
             return LockX(self.__disc_lock)
+        
+    def quest(self):
+        if self.local.thread_id == 0:
+            return LockX()
+        else:
+            return LockX(self.__quest_lock)
 
     def clipboard_aquire(self):
         self.__clipboard_lock.acquire()

@@ -29,6 +29,7 @@ def quest(id, name, trial, key, members, party_id=None, ability_name=None, surpp
     exe.sys_args['battle\\auto.slc.stt.json'] = 'changed'
     exe.set_trigger('quest\\partyselect.dmy.stt.json', ready, key=key, members=members)
     exe.set_trigger('quest\\partyselect1.dmy.stt.json', send, uuid=key, key='battle', message='stay')
+    exe.set_trigger('quest\\lock.dmy.stt.json', lock)
     exe.set_trigger('battle\\clip_aquire.dmy.stt.json', clipboard_aquire)
     exe.set_trigger('battle\\send.dmy.stt.json', copy, uuid=key, key='raid_id')
     exe.set_trigger('battle\\clip_release.dmy.stt.json', clipboard_release)
@@ -60,6 +61,12 @@ def quest(id, name, trial, key, members, party_id=None, ability_name=None, surpp
     exe.run('page\\head.dmy.stt.json', **args)
     with utility.openx(path, 'wt') as f:
         json.dump(exe.usr_args, f, indent=2)
+
+def lock(exe):
+    with mythread.mt.quest():
+        if 'time_mean' in exe.sys_args and exe.sys_args['time_mean'] is not None:
+            t = min((exe.sys_args['time_mean'].total_seconds()-3)/12, 3)
+            sleep(t)
 
 def send(exe, uuid, key, message):
     mythread.mt.send(uuid, key, message)
