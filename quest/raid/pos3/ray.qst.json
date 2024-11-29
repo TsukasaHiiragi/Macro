@@ -1,0 +1,12 @@
+{
+  "page": "raid",
+  "attr": "ray",
+  "scroll": "sc1",
+  "position": "pos3",
+  "team": "multi",
+  "auto": "ability",
+  "burst": "off",
+  "type": "raid",
+  "target": "none",
+  "result": "none"
+}

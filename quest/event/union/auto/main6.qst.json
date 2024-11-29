@@ -1,0 +1,14 @@
+{
+  "page": "event",
+  "event_pos": "pos3",
+  "event_type": "union",
+  "union_type": "main",
+  "scroll": "sc2",
+  "position": "pos3",
+  "team": "solo",
+  "auto": "auto",
+  "burst": "off",
+  "target": "none",
+  "type": "raid",
+  "result": "union"
+}

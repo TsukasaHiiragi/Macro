@@ -5,3 +5,5 @@ numpy
 mttkinter
 pillow
 opencv-python
+requests
+selenium

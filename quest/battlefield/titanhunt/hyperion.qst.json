@@ -1,0 +1,11 @@
+{
+  "page": "battlefield",
+  "field": "titanhunt",
+  "titanhunt": "hyperion",
+  "team": "solo",
+  "auto": "ability",
+  "burst": "off",
+  "target": "none",
+  "type": "solo",
+  "result": "once"
+}
