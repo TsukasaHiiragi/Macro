@@ -119,7 +119,7 @@ class LeafSymbol(Symbol):
         
         # with mythread.mt.screen():
         found = pyautogui.locateOnScreen(
-            image_resized, region=r.region(), confidence=0.8)
+            image_resized, region=r.region(), confidence=0.7)
 
         if found:
             d = r.diff(found)

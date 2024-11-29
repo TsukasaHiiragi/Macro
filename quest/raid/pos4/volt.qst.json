@@ -1,0 +1,12 @@
+{
+  "page": "raid",
+  "attr": "volt",
+  "scroll": "sc1",
+  "position": "pos4",
+  "team": "multi",
+  "auto": "ability",
+  "burst": "off",
+  "type": "raid",
+  "target": "none",
+  "result": "none"
+}

@@ -1,0 +1,12 @@
+{
+  "page": "raid",
+  "attr": "phantom",
+  "scroll": "sc2",
+  "position": "pos1",
+  "team": "solo",
+  "auto": "ability",
+  "burst": "on",
+  "type": "raid",
+  "target": "none",
+  "result": "none"
+}

@@ -329,7 +329,7 @@ def sequencial(qs, ids, uuid, func):
     
                 
 def daily(qs, pos, special=False):
-    multi(qs,'event\\raid\\rag_multi',3,[0,3],[0,1,2,6,7,8,12,13,14,18,19,20],arrange=False)
+    # multi(qs,'event\\raid\\rag_multi',3,[0,3],[0,1,2,6,7,8,12,13,14,18,19,20],arrange=False)
     for id in range(24):
         multi(qs,f'acce\\pos{pos}', 3, [id], [0], arrange=False)
         if check(id, 'gacha_normal', 1) > 0:

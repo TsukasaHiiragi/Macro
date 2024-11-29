@@ -1,0 +1,12 @@
+{
+  "page": "event",
+  "event_pos": "pos1",
+  "event_type": "raid",
+  "event_raid_pos": "pos2",
+  "team": "solo",
+  "auto": "ability",
+  "burst": "none",
+  "target": "none",
+  "type": "raid",
+  "result": "none"
+}

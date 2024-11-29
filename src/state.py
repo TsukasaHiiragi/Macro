@@ -12,6 +12,7 @@ import action
 import utility
 import mythread
 import gui
+import dom
 
 class State:
     def __init__(self, path, next=None):
@@ -384,21 +385,51 @@ class StateDecoder(json.JSONDecoder):
         if act: return act
 
 def openwindow(exe,id):
-    with mythread.mt.screen():
+    x = ((id - 1) // 3) % 4
+    y = (id - 1) % 3
+    with mythread.mt.mouse():
         subprocess.run(
-            ["start",
-            "C:/Users/tsuka/Downloads/Win_x64_1343897_chrome-win/chrome-win/chrome_proxy.exe",
-            f"--user-data-dir=C:/chrominum{id:0=2d}",
-            "--profile-directory=Default",
-            "--app-id=efalfgdhlenlkooaclaahpdhchbcnhif"
+            [
+                "start",
+                "C:/Users/tsuka/Downloads/Win_x64_1052137_chrome-win/chrome-win/chrome.exe",
+                f"--remote-debugging-port=92{id:0=2d}",
+                f"--user-data-dir=C:/chrominum{id:0=2d}",
+                "--app=https://pc-play.games.dmm.co.jp/play/kamipror/",
+                "--window-size=495,359",
+                f"--window-position={x*480-6},{y*350}",
+                "--disable-infobars",
+                "--disable-extensions",
+                "--disable-infobars",
+                "--no-default-browser-check",
             ]
             ,shell=True)
         time.sleep(3)
+
+    driver, actions = dom.activate_driver(id)
+
+    time.sleep(3)
+
+    dom.apply_css(driver)
+
+    mythread.mt.local.driver = driver
+    mythread.mt.local.actions = actions
+    mythread.mt.local.current = 0, 0
+
+    # with mythread.mt.screen():
+    #     subprocess.run(
+    #         ["start",
+    #         "C:/Users/tsuka/Downloads/Win_x64_1052137_chrome-win/chrome-win/chrome_proxy.exe",
+    #         f"--user-data-dir=C:/chrominum{id:0=2d}",
+    #         "--profile-directory=Default",
+    #         "--app-id=efalfgdhlenlkooaclaahpdhchbcnhif"
+    #         ]
+    #         ,shell=True)
+    time.sleep(3)
     
 def openbrowser(exe,id):
     subprocess.run(
         ["start",
-        "C:/Users/tsuka/DownloadsWin_x64_1343897_chrome-win/chrome-win/chrome.exe",
+        "C:/Users/tsuka/Downloads/Win_x64_1052137_chrome-win/chrome-win/chrome.exe",
         f"--user-data-dir=C:/chrominum{id:0=2d}"]
         ,shell=True)
 
@@ -489,8 +520,6 @@ class Executer:
         # mythread.mt.local.scale = scale
         # mythread.mt.local.position = position
         if close:
-            exe = Executer()
-            exe.run('close\\head.dmy.stt.json')
             exe = Executer()
             id = mythread.mt.local.thread_id
             exe.set_trigger(f'restore\\open.dmy.stt.json',openwindow,id)

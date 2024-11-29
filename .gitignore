@@ -1,9 +1,7 @@
+.venv
 venv
-utility.py
 ability/*
-quest/*
 state/*
 bin/*
 remain/*
-__pycache__/
-**/__pycache__/
+!remain/*.back.json

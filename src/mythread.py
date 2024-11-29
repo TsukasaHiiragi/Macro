@@ -377,6 +377,10 @@ def controller(thread_id, q:queue.Queue):
     mt.local.position_org = mt.local.position
     
     mt.local.scale = 50
+
+    mt.local.driver = None
+    mt.local.actions = None
+    mt.local.current = None
     
     # region = (
     #             ( 711, 85,390,27),

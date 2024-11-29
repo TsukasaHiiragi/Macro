@@ -15,6 +15,7 @@ import mythread
 import utility
 import action
 import image
+import dom
 
 def quest(id, name, trial, key, members, party_id=None, ability_name=None, surpport=None, pre=None, arrange=True, time=None, limit=None, peer=False):
     start(id)
@@ -622,12 +623,20 @@ def start(id):
     # mythread.mt.local.thread_id = id
     # mythread.mt.local.scale = scale
     # mythread.mt.local.position = position
-    exe = Executer()
-    exe.set_trigger(f'restore\\open.dmy.stt.json',openwindow,id)
-    error = exe.run('restore\\head.dmy.stt.json', timeout=180, root=False, mode='validate')
-    if error:
-        close()
-        start(id)
+    
+    if dom.is_chromium_running(id):
+        if mythread.mt.local.driver is None:
+            driver, actions = dom.activate_driver(id)
+            mythread.mt.local.driver = driver
+            mythread.mt.local.actions = actions
+            mythread.mt.local.current = 0, 0
+    else:
+        exe = Executer()
+        exe.set_trigger(f'restore\\open.dmy.stt.json',openwindow,id)
+        error = exe.run('restore\\head.dmy.stt.json', timeout=180, root=False, mode='validate')
+        if error:
+            close()
+            start(id)
 
 def close():
     exe = Executer()
