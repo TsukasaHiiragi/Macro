@@ -59,10 +59,10 @@ def quest(id, name, trial, key, members, party_id=None, ability_name=None, surpp
         exe.set_trigger('quest\\union.dmy.stt.json', syncronize, key='unionresult', members=12, peer=peer)
     elif arrange:
         exe.set_trigger('quest\\result1.dmy.stt.json', send, uuid=key, key='battle', message='reload', peer=peer)
-        if members == 1:
-            exe.set_trigger('quest\\lock.dmy.stt.json', lock, members=members, time_mean=time)
-        else:
-            exe.set_trigger('battle\\lock.dmy.stt.json', lock, members=members, time_mean=time)
+        # if members == 1:
+        #     exe.set_trigger('quest\\lock.dmy.stt.json', lock, members=members, time_mean=time)
+        # else:
+        #     exe.set_trigger('battle\\lock.dmy.stt.json', lock, members=members, time_mean=time)
     else:
         exe.set_trigger('quest\\lock.dmy.stt.json', reset)
 

@@ -3,6 +3,8 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.action_chains import ActionChains
 
+import local
+
 def is_chromium_running(id):
     try:
         response = requests.get(f"http://127.0.0.1:92{id:0=2d}/json/version", timeout=2)
@@ -15,7 +17,7 @@ def is_chromium_running(id):
     return False
 
 def activate_driver(id):
-    chromedriver_path = "C:\\Users\\tsuka\\Downloads\\chromedriver_win32\\chromedriver.exe"
+    chromedriver_path = local.driver_path
     options = webdriver.ChromeOptions()
     options.debugger_address = f"127.0.0.1:92{id:0=2d}"
     driver = webdriver.Chrome(service=Service(chromedriver_path), options=options)
