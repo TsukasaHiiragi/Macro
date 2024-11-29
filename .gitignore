@@ -3,3 +3,5 @@ utility.py
 ability/*
 quest/*
 state/*
+bin/*
+remain/*

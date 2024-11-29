@@ -140,6 +140,10 @@ class TextWindow:
             hDC, paintStruct = win32gui.BeginPaint(hWnd)
             win32gui.SetBkMode(hDC, win32con.TRANSPARENT)
             win32gui.SetTextColor(hDC, 0x0000FF00)
+            lplf = win32gui.LOGFONT()
+            lplf.lfHeight = 13
+            font = win32gui.CreateFontIndirect(lplf)
+            win32gui.SelectObject(hDC, font)
             win32gui.ExtTextOut(hDC, 0, 0, 0, None, text)
             win32gui.EndPaint(hWnd, paintStruct)
             return 0
@@ -196,14 +200,17 @@ class Display:
         self.root = None
         self.q = q
         self.hwnd = []
-        for _ in range(12):
+        for _ in range(24):
             self.hwnd.append([None]*4)
 
     def close(self, hwnd):
         win32gui.SendMessage(hwnd, win32con.WM_CLOSE, None, None)
 
-    def request(self, func, tid, wid, oid, *args):
-        self.q.put((func, tid, wid, oid)+args)
+    def request(self, func, tid, wid, oid, *args, block=False):
+        try:
+            self.q.put((func, tid, wid, oid)+args, block=block)
+        except queue.Full:
+            return
 
     def response(self):
         try:
