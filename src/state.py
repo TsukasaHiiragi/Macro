@@ -504,7 +504,7 @@ class Executer:
         error = exe.run('restore\\head.dmy.stt.json')
         return error
     
-    def abandon(self, close=False):
+    def abandon(self):
         # exe = Executer()
         # exe.run('close\\head.dmy.stt.json')
         # id = mythread.mt.local.thread_id
@@ -520,20 +520,20 @@ class Executer:
         # mythread.mt.local.thread_id = id
         # mythread.mt.local.scale = scale
         # mythread.mt.local.position = position
-        if close:
-            exe = Executer()
-            id = mythread.mt.local.thread_id
-            exe.set_trigger(f'restore\\open.dmy.stt.json',openwindow,id)
-            error = exe.run('restore\\head.dmy.stt.json',timeout=180, root=False)
-        else:
-            exe = Executer()
-            with mythread.mt.screen():
-                error = exe.run('reload\\head.dmy.stt.json',timeout=20, root=False)
-                time.sleep(5)
-            exe = Executer()
-            error = exe.run('restore\\open.dmy.stt.json',timeout=180, root=False)
+        # if close:
+        exe = Executer()
+        id = mythread.mt.local.thread_id
+        exe.set_trigger(f'restore\\open.dmy.stt.json',openwindow,id)
+        error = exe.run('restore\\head.dmy.stt.json',timeout=180, root=False)
+        # else:
+        #     exe = Executer()
+        #     with mythread.mt.screen():
+        #         error = exe.run('reload\\head.dmy.stt.json',timeout=20, root=False)
+        #         time.sleep(5)
+        #     exe = Executer()
+        #     error = exe.run('restore\\open.dmy.stt.json',timeout=180, root=False)
         if error:
-            return self.abandon(close=True)
+            return self.abandon()
         exe = Executer()
         error = exe.run('abandon\\head.dmy.stt.json',timeout=180, root=False)
         if error:
