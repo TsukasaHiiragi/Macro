@@ -1,0 +1,16 @@
+{
+  "_type": "Action",
+  "value": {
+    "actions": [
+      {
+        "_type": "Click",
+        "value": {
+          "x": 28,
+          "y": 93,
+          "interval": null,
+          "keys": null
+        }
+      }
+    ]
+  }
+}
