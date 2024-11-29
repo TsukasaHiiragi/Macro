@@ -2,6 +2,7 @@ import os
 import json
 import threading
 from time import sleep
+import random
 
 import numpy as np
 import pyautogui
@@ -10,6 +11,7 @@ from pynput import mouse, keyboard
 import utility
 import mythread
 import image
+from selenium.webdriver.common.keys import Keys
 
 class Action:
     def init(self):
@@ -70,23 +72,35 @@ class Wait(Action):
         return code
 
 class Click(Action):
-    def __init__(self, x, y, interval=None, keys=None):
+    def __init__(self, x, y, interval=None, keys=None, rand=False):
         super().__init__()
         self.coord = np.array([x,y])
         self.interval = interval
         self.keys = keys
+        self.rand = rand
 
     def exe(self):
         if self.interval: sleep(self.interval[0])
         scale = mythread.mt.local.scale
         position = mythread.mt.local.position[0]
-        coord = mythread.centor+(self.coord-mythread.centor)*scale/50+position
-        x,y = int(coord[0]),int(coord[1])
-        with mythread.mt.mouse():
-            pyautogui.click(x,y)
-            if self.keys: pyautogui.hotkey(*self.keys)
+        # coord = mythread.centor+(self.coord-mythread.centor)*scale/50+position
+        coord = mythread.centor+(self.coord-mythread.centor)*scale/50
+        # x,y = int(coord[0]),int(coord[1])
+        x,y = int(coord[0]*2),int(coord[1]*2-60)
+        if self.rand:
+            x = x + random.randint(-1,1)
+            y = y + random.randint(-1,1)
+        # with mythread.mt.mouse():
+        # pyautogui.click(x,y)
+        # if self.keys: pyautogui.hotkey(*self.keys)
+        cx, cy = mythread.mt.local.current
+        mythread.mt.local.actions.move_by_offset(x-cx, y-cy).click().perform()
+        mythread.mt.local.current = x, y
+        if self.keys:
+            body = mythread.mt.driver.find_element("tag name", "body")
+            body.send_keys(Keys.CONTROL + 'v')  # Ctrl+S
         if self.interval: sleep(self.interval[1])
-        else: sleep(1.2)
+        else: sleep(1.0)
 
     def default(self):
         code = super().default()
@@ -114,7 +128,7 @@ class Scroll(Action):
             pyautogui.moveTo(x,y)
             pyautogui.scroll(self.amount)
         if self.interval: sleep(self.interval[1])
-        else: sleep(1.8)
+        else: sleep(1.0)
 
     def default(self):
         code = super().default()
@@ -124,6 +138,40 @@ class Scroll(Action):
         code['value']['interval'] = self.interval
         code['value']['amount'] = self.amount
         return code
+
+class Drag(Action):
+    def __init__(self, x, y, amount, interval=None):
+        super().__init__()
+        self.coord = np.array([x,y])
+        self.amount = amount
+        self.interval = interval
+
+    def exe(self):
+        if self.interval: sleep(self.interval[0])
+        scale = mythread.mt.local.scale
+        position = mythread.mt.local.position[0]
+        coord = mythread.centor+(self.coord-mythread.centor)*scale/50
+        x,y = int(coord[0]*2),int(coord[1]*2-60)
+        cx, cy = mythread.mt.local.current
+        mythread.mt.local.actions.move_by_offset(x-cx, y-cy)
+        mythread.mt.local.actions.click_and_hold()
+        mythread.mt.local.actions.move_by_offset(0, self.amount)
+        mythread.mt.local.actions.release()
+        mythread.mt.local.actions.perform()
+        mythread.mt.local.current = x, y + self.amount
+
+        if self.interval: sleep(self.interval[1])
+        else: sleep(1.8)
+
+    def default(self):
+        code = super().default()
+        code['_type'] = 'Drag'
+        code['value']['x'] = int(self.coord[0])
+        code['value']['y'] = int(self.coord[1])
+        code['value']['interval'] = self.interval
+        code['value']['amount'] = self.amount
+        return code
+
 
 class Press(Action):
     def __init__(self, key, interval=None):
@@ -197,6 +245,7 @@ class ActionDecoder(json.JSONDecoder):
         if type == 'Wait': return Wait(**o['value'])
         if type == 'Click': return Click(**o['value'])
         if type == 'Scroll': return Scroll(**o['value'])
+        if type == 'Drag': return Drag(**o['value'])
         if type == 'Press': return Press(**o['value'])
         if type == 'HotKey': return HotKey(**o['value'])
         if type == 'Capture': return Capture(**o['value'])
@@ -295,16 +344,16 @@ class KeyInput:
     def stop(self):
         self.keyboard_listener.stop()
     
-    def join(self):
-        self.keyboard_listener.join()
+    def join(self, timeout=None):
+        self.keyboard_listener.join(timeout=timeout)
 
     def is_alive(self):
         return self.keyboard_listener.is_alive()
 
-def key_input(keys):
+def key_input(keys, timeout=None):
     monitor = KeyInput(keys)
     monitor.start()
-    monitor.join()
+    monitor.join(timeout=timeout)
     return monitor.key
 
 def main():

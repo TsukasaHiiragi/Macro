@@ -101,16 +101,17 @@ class LeafSymbol(Symbol):
             return True
 
         scale = mythread.mt.local.scale
-        mu,lam = mythread.mt.local.position
+        mu,lam = mythread.mt.local.position_org
         a,b = self.accuracy
         eta = a/b
 
         r = Region(self.region)
         r.scaling(scale/50, mythread.centor)
         r.translation(mu)
-        r.spacing(15+3*np.sqrt((1+eta/lam)/eta))
-
-        # mythread.mt.rect(*r.region(), owner=hwnd)
+        # r.spacing(15+3*np.sqrt((1+eta/lam)/eta))
+        r.spacing(45)
+        if hwnd is not None:
+            mythread.mt.rect(*r.region(), owner=hwnd)
 
         image = Image.open(self.image_path)
         size = int(image.width*scale/50),int(image.height*scale/50)
@@ -118,11 +119,12 @@ class LeafSymbol(Symbol):
         
         # with mythread.mt.screen():
         found = pyautogui.locateOnScreen(
-            image_resized, region=r.region(), confidence=0.8)
+            image_resized, region=r.region(), confidence=0.7)
 
         if found:
             d = r.diff(found)
-            _mu = (mu+(mu+d)*eta/lam)/(1+eta/lam)
+            # _mu = (mu+(mu+d)*eta/lam)/(1+eta/lam)
+            _mu = mu+d
             _lam = lam+eta
             # _a = a+(1+eta/lam)/2
             # _b = b+d**2/2
@@ -138,14 +140,15 @@ class LeafSymbol(Symbol):
         r = Region(self.region)
         r.scaling(scale/50, mythread.centor)
         r.translation(mu)
-        img = pyautogui.screenshot(region=r.region())
+        with mythread.mt.screen():
+            img = pyautogui.screenshot(region=r.region())
         r.spacing(10)
-        hwnd = mythread.mt.rect(*r.region())
+        # hwnd = mythread.mt.rect(*r.region())
         size = int(img.width*50/scale),int(img.height*50/scale)
         img = img.resize(size)
         img.save(self.image_path)
         time.sleep(0.6)
-        mythread.mt.close(hwnd)
+        # mythread.mt.close(hwnd)
 
     def default(self):
         code = super().default()
@@ -168,8 +171,8 @@ class AndSymbol(Symbol):
     def __or__(self,other):
         return OrSymbol(self,other)
 
-    def search(self, level=0):
-        return self.right.search(level) if self.left.search(level) else None
+    def search(self, hwnd=None):
+        return self.right.search(hwnd) if self.left.search(hwnd) else None
 
     def default(self):
         code = super().default()
@@ -190,9 +193,9 @@ class OrSymbol(Symbol):
     def __or__(self,other):
         return OrSymbol(self,other)
 
-    def search(self, level=0):
-        left = self.left.search(level)
-        return left if left else self.right.search(level)
+    def search(self, hwnd=None):
+        left = self.left.search(hwnd)
+        return left if left else self.right.search(hwnd)
 
     def default(self):
         code = super().default()

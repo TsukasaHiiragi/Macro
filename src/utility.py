@@ -1,5 +1,6 @@
 import os
 import time
+import datetime
 
 def unique_name(name,ext=''):
     if not os.path.exists(f"{name}{ext}"):
@@ -12,18 +13,27 @@ def unique_name(name,ext=''):
 def path_to_state():
     return 'C:\\Users\\tsuka\\gitrepo\\Macro\\state'
 
+def path_to_repo():
+    return 'C:\\Users\\tsuka\\gitrepo\\Macro'
+
+
 class OpenX:
     def __init__(self, file, mode):
         self.file = file
         self.mode = mode
 
     def __enter__(self):
-        try:
-            self.fp = open(self.file, self.mode)
-        except FileNotFoundError:
-            if self.mode == 'wt':
-                os.makedirs(os.path.dirname(self.file), exist_ok=True)
-            self.fp = open(self.file, self.mode)
+        while 1:
+            try:
+                self.fp = open(self.file, self.mode)
+            except FileNotFoundError:
+                if self.mode == 'wt':
+                    os.makedirs(os.path.dirname(self.file), exist_ok=True)
+            except Exception as e:
+                print(e)
+                time.sleep(1)
+            else:
+                break
 
         return self.fp
 
@@ -39,14 +49,25 @@ def openx(file, mode):
 
 class Timer:
     def __init__(self):
-        self.start = time.time()
+        self.start = datetime.datetime.now()
+        self.latest = self.start
 
     def elapse(self):
-        return time.time() - self.start
+        return datetime.datetime.now() - self.start
 
+    def lap(self):
+        t = datetime.datetime.now()
+        d = t - self.latest
+        self.latest = t
+        return d
+    
     def timeout(self, max):
         if max is None: return False
-        return self.elapse() > max
+        return self.elapse().total_seconds() > max
+    
+    def reset(self):
+        self.start = datetime.datetime.now()
+        self.latest = self.start
 
 def rect2region(rect):
     return rect[0],rect[1],rect[2]-rect[0],rect[3]-rect[1]

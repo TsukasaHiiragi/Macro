@@ -1,5 +1,7 @@
 .venv
-utility.py
+venv
 ability/*
 quest/*
 state/*
+bin/*
+remain/*
