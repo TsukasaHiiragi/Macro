@@ -13,6 +13,7 @@ import utility
 import mythread
 import gui
 import dom
+import local
 
 class State:
     def __init__(self, path, next=None):
@@ -429,7 +430,7 @@ def openwindow(exe,id):
 def openbrowser(exe,id):
     subprocess.run(
         ["start",
-        "C:/Users/tsuka/Downloads/Win_x64_1052137_chrome-win/chrome-win/chrome.exe",
+        local.chrome_path,
         f"--user-data-dir=C:/chrominum{id:0=2d}"]
         ,shell=True)
 

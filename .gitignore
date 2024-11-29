@@ -5,3 +5,4 @@ state/*
 bin/*
 remain/*
 !remain/*.back.json
+src/local.py
