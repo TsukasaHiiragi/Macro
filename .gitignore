@@ -6,3 +6,5 @@ bin/*
 remain/*
 !remain/*.back.json
 src/local.py
+__pycache__/*
+**/__pycache__/*
