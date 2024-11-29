@@ -5,3 +5,5 @@ quest/*
 state/*
 bin/*
 remain/*
+__pycache__/
+**/__pycache__/
