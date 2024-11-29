@@ -15,6 +15,7 @@ import log
 import display
 import action
 import utility
+import local
             
 rect_max = (0,0,3839,1079)
 # centor = np.array([952.5,275.5])
@@ -100,14 +101,14 @@ class MyThread:
             elif self.is_server:
                 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 print('waiting connection...')
-                server.bind(('192.168.0.11', 796))
+                server.bind((local.my_ip, 796))
                 server.listen(1)
                 sock, addr = server.accept()
                 print(f'connect {addr}')
             else:
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 print('trying connection...')
-                sock.connect(('192.168.0.10', 796))
+                sock.connect((local.pair_ip, 796))
                 print('success to connect')
             
             send = threading.Thread(target=sender, daemon=True, kwargs={'sock': sock, 'q': self.__connect})
