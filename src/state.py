@@ -392,7 +392,7 @@ def openwindow(exe,id):
         subprocess.run(
             [
                 "start",
-                "C:/Users/tsuka/Downloads/Win_x64_1052137_chrome-win/chrome-win/chrome.exe",
+                local.chrome_path,
                 f"--remote-debugging-port=92{id:0=2d}",
                 f"--user-data-dir=C:/chrominum{id:0=2d}",
                 "--app=https://pc-play.games.dmm.co.jp/play/kamipror/",
