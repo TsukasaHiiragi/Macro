@@ -660,6 +660,7 @@ def episode():
     exe.run('episode\\head.dmy.stt.json', timeout=None)
 
 def reduction(action,trial=None):
+    start(mythread.mt.local.thread_id)
     def count(exe:Executer, trial):
         c = exe.sys_args['count']
         if trial is not None and c+1>=trial:
@@ -832,7 +833,7 @@ def record():
     id = dic[action.key_input(alphabets)]+1
     mythread.mt.print(f'id{id} is selected.')
 
-    x = ((id - 1) // 3) % 4
+    x = ((id - 1) // 3)
     y = (id - 1) % 3
     position = np.array([479. * x, 350. * y])
     scale = 50

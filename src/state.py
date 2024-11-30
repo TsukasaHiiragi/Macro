@@ -386,7 +386,7 @@ class StateDecoder(json.JSONDecoder):
         if act: return act
 
 def openwindow(exe,id):
-    x = ((id - 1) // 3) % 4
+    x = ((id - 1) // 3)
     y = (id - 1) % 3
     with mythread.mt.mouse():
         subprocess.run(

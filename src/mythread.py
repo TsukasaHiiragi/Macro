@@ -344,7 +344,7 @@ def controller(thread_id, q:queue.Queue):
         mt.local.position = (np.array([0.,0.]),np.array([np.inf,np.inf]))
         region = ( 711, 85,390,27)
     else:
-        x = ((thread_id - 1) // 3) % 4
+        x = ((thread_id - 1) // 3)
         y = (thread_id - 1) % 3
         mt.local.position = (np.array([479. * x, 350. * y]),np.array([0.01,0.01]))
         region = (4 + 480*x, 350*y, 390, 27)
