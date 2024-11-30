@@ -93,12 +93,17 @@ class Click(Action):
         # with mythread.mt.mouse():
         # pyautogui.click(x,y)
         # if self.keys: pyautogui.hotkey(*self.keys)
-        cx, cy = mythread.mt.local.current
-        mythread.mt.local.actions.move_by_offset(x-cx, y-cy).click().perform()
-        mythread.mt.local.current = x, y
         if self.keys:
-            body = mythread.mt.local.driver.find_element("tag name", "body")
-            body.send_keys(Keys.CONTROL + 'v')  # Ctrl+S
+            with mythread.mt.mouse():
+                cx, cy = mythread.mt.local.current
+                mythread.mt.local.actions.move_by_offset(x-cx, y-cy).click().perform()
+                mythread.mt.local.current = x, y
+                body = mythread.mt.local.driver.find_element("tag name", "body")
+                body.send_keys(Keys.CONTROL + 'v')  # Ctrl+S
+        else:
+            cx, cy = mythread.mt.local.current
+            mythread.mt.local.actions.move_by_offset(x-cx, y-cy).click().perform()
+            mythread.mt.local.current = x, y
         if self.interval: sleep(self.interval[1])
         else: sleep(1.0)
 
