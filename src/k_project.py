@@ -10,7 +10,7 @@ import pyperclip
 import pyautogui
 import win32gui
 
-from state import Executer, openwindow, openbrowser
+from state import Executer, openwindow, closewindow, openbrowser
 import mythread
 import utility
 import action
@@ -609,7 +609,7 @@ def restore(id):
     exe.set_trigger(f'restore\\open.dmy.stt.json',openwindow,id)
     exe.run('restore\\head.dmy.stt.json')
     
-def start(id):
+def start(id, mode='validate'):
     # id = mythread.mt.local.thread_id
     # scale = mythread.mt.local.scale
     # position = mythread.mt.local.position
@@ -624,7 +624,7 @@ def start(id):
     # mythread.mt.local.scale = scale
     # mythread.mt.local.position = position
     
-    if dom.is_chromium_running(id):
+    if dom.is_chromium_running(id) and False:
         if mythread.mt.local.driver is None:
             driver, actions = dom.activate_driver(id)
             mythread.mt.local.driver = driver
@@ -633,13 +633,14 @@ def start(id):
     else:
         exe = Executer()
         exe.set_trigger(f'restore\\open.dmy.stt.json',openwindow,id)
-        error = exe.run('restore\\head.dmy.stt.json', timeout=180, root=False, mode='validate')
+        error = exe.run('restore\\head.dmy.stt.json', timeout=180, root=False, mode=mode)
         if error:
-            close()
-            start(id)
+            start(id, mode='restart')
 
 def close():
+    id = mythread.local.id
     exe = Executer()
+    exe.set_trigger(f'close\\close.dmy.stt.json',closewindow,id)
     exe.run('close\\head.dmy.stt.json')
 
 def reload():

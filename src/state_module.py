@@ -760,8 +760,8 @@ def restore():
     a.dmy('head').connect(a.brn('isopen'))
     a.brn('isopen').connect(a.dmy('top'), exception=a.dmy('open'))
     a.dmy('top').connect(a.slc('top'))
-    a.slc('top').connect('mode', validate=a.dmy('tail'), default=a.man('shut'))
-    a.man('shut').connect(a.brn('isopen'))
+    a.slc('top').connect('mode', validate=a.dmy('tail'), default=a.dmy('shut'))
+    a.dmy('shut').connect(a.brn('isopen'))
     a.dmy('open').connect(a.brn('open'))
     a.brn('open').connect(a.brn('top'))
     a.brn('top').connect(a.man('login'), a.man('popup'), a.man('start'))
@@ -1088,8 +1088,8 @@ def epic():
 def close():
     a = Assister('close')
     a.dmy('head').connect(a.man('close'))
-    a.man('close').connect(a.brn('close'))
-    a.brn('close').connect(a.man('close'), exception=a.dmy('tail'))
+    a.dmy('close').connect(a.brn('close'))
+    a.brn('close').connect(a.dmy('close'), exception=a.dmy('tail'))
     a.save()
 
 def reload():

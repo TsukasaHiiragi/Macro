@@ -426,6 +426,10 @@ def openwindow(exe,id):
     #         ]
     #         ,shell=True)
     time.sleep(3)
+
+def closewindow(exe,id):
+    dom.close_chromium_via_debugger(id)
+    time.sleep(3)
     
 def openbrowser(exe,id):
     subprocess.run(
@@ -448,6 +452,7 @@ class Executer:
 
     def forward(self, timeout, root):
         self.path = self.state.forward(self.usr_args, self.sys_args, self.act_cache, self.sym_cache)
+        # if mythread.mt.local.thread_id == 1:
         # print(f'{mythread.mt.local.thread_id} {self.path}')
         if self.path is None: return
         if self.path in self.trigger:
@@ -524,7 +529,8 @@ class Executer:
         exe = Executer()
         id = mythread.mt.local.thread_id
         exe.set_trigger(f'restore\\open.dmy.stt.json',openwindow,id)
-        error = exe.run('restore\\head.dmy.stt.json',timeout=180, root=False)
+        exe.set_trigger(f'restore\\shut.dmy.stt.json',closewindow,id)
+        error = exe.run('restore\\head.dmy.stt.json',timeout=180, root=False, mode='restart')
         # else:
         #     exe = Executer()
         #     with mythread.mt.screen():
