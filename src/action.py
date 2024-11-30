@@ -98,8 +98,7 @@ class Click(Action):
                 cx, cy = mythread.mt.local.current
                 mythread.mt.local.actions.move_by_offset(x-cx, y-cy).click().perform()
                 mythread.mt.local.current = x, y
-                body = mythread.mt.local.driver.find_element("tag name", "body")
-                body.send_keys(Keys.CONTROL + 'v')  # Ctrl+S
+                pyautogui.hotkey(*self.keys)
         else:
             cx, cy = mythread.mt.local.current
             mythread.mt.local.actions.move_by_offset(x-cx, y-cy).click().perform()
