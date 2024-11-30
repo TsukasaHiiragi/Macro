@@ -97,7 +97,7 @@ class Click(Action):
         mythread.mt.local.actions.move_by_offset(x-cx, y-cy).click().perform()
         mythread.mt.local.current = x, y
         if self.keys:
-            body = mythread.mt.driver.find_element("tag name", "body")
+            body = mythread.mt.local.driver.find_element("tag name", "body")
             body.send_keys(Keys.CONTROL + 'v')  # Ctrl+S
         if self.interval: sleep(self.interval[1])
         else: sleep(1.0)
