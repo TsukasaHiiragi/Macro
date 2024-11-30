@@ -624,7 +624,7 @@ def start(id, mode='validate'):
     # mythread.mt.local.scale = scale
     # mythread.mt.local.position = position
     
-    if dom.is_chromium_running(id) and False:
+    if dom.is_chromium_running(id):
         if mythread.mt.local.driver is None:
             driver, actions = dom.activate_driver(id)
             mythread.mt.local.driver = driver
