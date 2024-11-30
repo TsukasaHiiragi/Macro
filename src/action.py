@@ -96,9 +96,9 @@ class Click(Action):
         if self.keys:
             with mythread.mt.mouse():
                 cx, cy = mythread.mt.local.current
-                mythread.mt.local.actions.move_by_offset(x-cx, y-cy).click().perform()
+                mythread.mt.local.actions.move_by_offset(x-cx, y-cy).click().key_down(Keys.CONTROL).send_keys('v').key_up(Keys.CONTROL).perform()
                 mythread.mt.local.current = x, y
-                pyautogui.hotkey(*self.keys)
+                # pyautogui.hotkey(*self.keys)
         else:
             cx, cy = mythread.mt.local.current
             mythread.mt.local.actions.move_by_offset(x-cx, y-cy).click().perform()
