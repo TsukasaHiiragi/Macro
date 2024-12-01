@@ -55,6 +55,7 @@ def activate_driver(id):
     options = webdriver.ChromeOptions()
     options.debugger_address = f"127.0.0.1:92{id:0=2d}"
     driver = webdriver.Chrome(service=Service(chromedriver_path), options=options)
+    driver.implicitly_wait(0)
     actions = ActionChains(driver)
     actions.move_by_offset(0, 0)
     return driver, actions

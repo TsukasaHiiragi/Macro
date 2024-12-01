@@ -192,29 +192,31 @@ class BackWindow:
         return win32gui.DefWindowProc(hWnd, message, wParam, lParam)
 
 class Display:
-    def __init__(self, q:queue.Queue):
-        self.empty = None
-        self.rect = None
-        self.text = None
-        self.back = None
+    def __init__(self):
         self.root = None
-        self.q = q
+        self.qs = [None]*12
+        for i in range(12):
+            self.qs[i] = queue.Queue(2)
         self.hwnd = []
         for _ in range(24):
             self.hwnd.append([None]*4)
+        self.empty = EmptyWindow()
+        self.rect = RectWindow()
+        self.text = TextWindow()
+        self.back = BackWindow()
 
     def close(self, hwnd):
         win32gui.SendMessage(hwnd, win32con.WM_CLOSE, None, None)
 
     def request(self, func, tid, wid, oid, *args, block=False):
         try:
-            self.q.put((func, tid, wid, oid)+args, block=block)
+            self.qs[(tid-1)%12].put((func, tid, wid, oid)+args, block=block)
         except queue.Full:
             return
 
-    def response(self):
+    def response(self, id):
         try:
-            func, tid, oid, wid, *args = self.q.get_nowait()
+            func, tid, oid, wid, *args = self.qs[id].get_nowait()
             tid = tid - 1
             if func == "Close":
                 self.close(self.root)
@@ -234,15 +236,11 @@ class Display:
         except queue.Empty:
             return
 
-    def mainloop(self):
-        self.empty = EmptyWindow()
-        self.rect = RectWindow()
-        self.text = TextWindow()
-        self.back = BackWindow()
+    def mainloop(self, id):
         self.root = self.empty.instanciate()
         while 1:
             win32gui.PumpWaitingMessages()
-            self.response()
+            self.response(id)
 
 if __name__ == '__main__':
     com = Display()

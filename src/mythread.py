@@ -59,14 +59,16 @@ class MyThread:
         self.__battle_lock = threading.Lock()
         self.__sync:dict[str,Syncronize] = {}
         self.__event:dict[str,threading.Event] = {}
-        self.__display = display.Display(queue.Queue(96))
+        self.__display = display.Display()
         self.__message = {}
         self.__battle = queue.Queue(1)
         self.__connect = queue.Queue()
         self.root = None
         self.is_server = is_server
-        self.__thread_disp = threading.Thread(target=self.__display.mainloop, daemon=True)
-        self.__thread_disp.start()
+        self.__thread_disp = [None]*12
+        for i in range(12):
+            self.__thread_disp[i] = threading.Thread(target=self.__display.mainloop, daemon=True, kwargs={'id':i})
+            self.__thread_disp[i].start()
         self._thread_battle = threading.Thread(target=self.pop_battle, daemon=True)
         self._thread_battle.start()
     

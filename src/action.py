@@ -47,6 +47,7 @@ class Actions(Action):
     def exe(self):
         for action in self.actions:
             action.exe()
+        mythread.mt.local.actions.perform()
 
     def append(self, action):
         self.actions.append(action)
@@ -63,7 +64,7 @@ class Wait(Action):
         self.t = t
 
     def exe(self):
-        sleep(self.t)
+        mythread.mt.local.actions.pause(self.t)
 
     def default(self):
         code = super().default()
@@ -93,16 +94,15 @@ class Click(Action):
         # with mythread.mt.mouse():
         # pyautogui.click(x,y)
         # if self.keys: pyautogui.hotkey(*self.keys)
+        cx, cy = mythread.mt.local.current
+        mythread.mt.local.actions.move_by_offset(x-cx, y-cy)
+        mythread.mt.local.actions.click()
+        mythread.mt.local.current = x, y
         if self.keys:
-            cx, cy = mythread.mt.local.current
-            mythread.mt.local.actions.move_by_offset(x-cx, y-cy).click().key_down(Keys.CONTROL).send_keys('v').key_up(Keys.CONTROL).perform()
-            mythread.mt.local.current = x, y
-        else:
-            cx, cy = mythread.mt.local.current
-            mythread.mt.local.actions.move_by_offset(x-cx, y-cy).click().perform()
-            mythread.mt.local.current = x, y
-        if self.interval: sleep(self.interval[1])
-        else: sleep(1.0)
+            mythread.mt.local.actions.key_down(Keys.CONTROL)
+            mythread.mt.local.actions.send_keys('v')
+            mythread.mt.local.actions.key_up(Keys.CONTROL)
+        mythread.mt.local.actions.pause(self.interval[1] if self.interval else 1.0)
 
     def default(self):
         code = super().default()
@@ -159,11 +159,8 @@ class Drag(Action):
         mythread.mt.local.actions.click_and_hold()
         mythread.mt.local.actions.move_by_offset(0, self.amount)
         mythread.mt.local.actions.release()
-        mythread.mt.local.actions.perform()
         mythread.mt.local.current = x, y + self.amount
-
-        if self.interval: sleep(self.interval[1])
-        else: sleep(1.8)
+        mythread.mt.local.actions.pause(self.interval[1] if self.interval else 1.0)
 
     def default(self):
         code = super().default()
