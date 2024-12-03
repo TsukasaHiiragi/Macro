@@ -589,7 +589,17 @@ class Assister:
         if name not in self.__brn:
             self.__brn[name] = BranchState.open(f'{self.__dir}\\{name}')
         return self.__brn[name]
-
+    
+    def chain(self, name_list, fail_safe=True):
+        for i in range(len(name_list)):
+            self.man(name_list[i]).connect(self.brn(name_list[i]))
+            if i+1 < len(name_list):
+                if fail_safe:
+                    self.brn(name_list[i]).connect(self.man(name_list[i+1]), self.man(name_list[i]))
+                else:
+                    self.brn(name_list[i]).connect(self.man(name_list[i+1]))
+        return self.brn(name_list[-1])
+            
     def save(self):
         for state in self.__dmy.values(): state.save()
         for state in self.__man.values(): state.save()

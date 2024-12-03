@@ -15,6 +15,7 @@ def pid(attr):
     return party_dict[attr]
 
 def gacha_raid():
+    start(mythread.mt.local.thread_id)
     exe = Executer()
     exe.run('gacha_raid\\head.dmy.stt.json', timeout=None)
 

@@ -17,7 +17,7 @@ class MyActions:
         x, y = c
         x = int((x - offset)/900*884)
         y = int(y/900*884-20)
-        self.actions.move_by_offset(x - self.cx, y - self.cy).click().pause(2)
+        self.actions.move_by_offset(x - self.cx, y - self.cy).click().pause(3)
         self.cx, self.cy = x, y
 
     def perform(self):
@@ -26,33 +26,20 @@ class MyActions:
 chromedriver_path = local.driver_path
 chromium_path = local.chrome_path
 
-options = webdriver.ChromeOptions()
-options.binary_location = chromium_path
-options.add_argument("--app=https://m.kuku.lu/recv.php")
-options.add_argument("--user-data-dir=C:/chrominum04")
-options.add_argument("--window-size=900,1050")
-options.add_argument("--window-position=900,0")
-options.add_argument("--disable-infobars")
-options.add_argument("--disable-extensions")
-options.add_argument("--no-default-browser-check")
-options.add_experimental_option("excludeSwitches", ["enable-automation"])
-options.add_experimental_option("useAutomationExtension", False)
-driver = webdriver.Chrome(service=Service(chromedriver_path), options=options)
-actions = MyActions(driver)
-time.sleep(3)
+coord = [
+    (2255, 370),
+    (2447, 418),
+    (2315, 368),
+    (2836, 276),
+]
 
-password = 'ahg34icb29ih4h'
-
-with open("output.txt", "w", encoding="utf-8") as file:
-    file.write(password + '\n')
-
-for id in range(25, 37):
+for id in range(61, 73):
     options = webdriver.ChromeOptions()
     options.binary_location = chromium_path
     options.add_argument("--app=https://pc-play.games.dmm.co.jp/play/kamipror/")
     options.add_argument(f"--user-data-dir=C:/chrominum{id:0=2d}")
     options.add_argument("--window-size=900,1050")
-    options.add_argument("--window-position=0,0")
+    options.add_argument("--window-position=2000,0")
     options.add_argument("--disable-infobars")
     options.add_argument("--disable-extensions")
     options.add_argument("--no-default-browser-check")
@@ -60,9 +47,18 @@ for id in range(25, 37):
     options.add_experimental_option("useAutomationExtension", False)
     driver1 = webdriver.Chrome(service=Service(chromedriver_path), options=options)
 
-    time.sleep(15)
+    actions = MyActions(driver1)
+
+    time.sleep(3)
+
+    for c in coord:
+        actions.click(c, 2000)
+    # actions.actions.pause(3).key_down(Keys.CONTROL)
+    # for _ in range(5):
+    #     actions.actions.send_keys(Keys.SUBTRACT).pause(1)
+    # actions.actions.key_up(Keys.CONTROL)
+    actions.perform()
+    
+    time.sleep(5)
 
     driver1.quit()
-
-
-driver.quit()

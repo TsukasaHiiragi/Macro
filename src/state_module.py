@@ -1146,6 +1146,193 @@ def work():
         a.man(name).connect(a.brn('head'))
     a.save()
 
+def tutorial():
+    a = Assister('tutorial')
+
+    a.dmy('head').connect(a.brn('head'))
+    a.brn('head').connect(a.man('privacy'), a.man('story_skip'))
+    a.man('privacy').connect(a.brn('privacy'))
+    a.brn('privacy').connect(a.man('voice_main'))
+
+    a.man('voice_main').connect(a.brn('voice_main'))
+    a.brn('voice_main').connect(a.man('story_skip'))
+
+    a.man('voice_harem').connect(a.brn('voice_harem'))
+    a.brn('voice_harem').connect(a.man('harem_skip'))
+
+    a.man('menu').connect(a.brn('menu'))
+    a.brn('menu').connect(a.man('menu_speed'), a.man('attack'), a.man('close'))
+    a.man('menu_speed').connect(a.brn('menu_speed'))
+    a.brn('menu_speed').connect(a.man('menu_back'))
+    a.man('menu_back').connect(a.brn('menu_back'))
+    a.brn('menu_back').connect(a.man('attack'))
+
+    a.man('samon').connect(a.brn('samon'))
+    a.brn('samon').connect(a.man('samon_select'))
+    a.man('samon_select').connect(a.brn('samon_select'))
+    a.brn('samon_select').connect(a.man('samon_use'))
+    a.man('samon_use').connect(a.brn('samon_use'))
+    a.brn('samon_use').connect(a.man('next'))
+
+    a.man('ability').connect(a.brn('ability'))
+    a.brn('ability').connect(a.man('ability_use'))
+    a.man('ability_use').connect(a.brn('ability_use'))
+    a.brn('ability_use').connect(a.man('ability_back'))
+    a.man('ability_back').connect(a.brn('ability_back'))
+    a.brn('ability_back').connect(a.man('attack'))
+
+    a.man('result_rankup').connect(a.brn('result_rankup'))
+    a.brn('result_rankup').connect(a.man('result_advance'))
+    a.man('result_advance').connect(a.brn('result_advance'))
+    a.brn('result_advance').connect(a.man('story_skip'))
+
+    a.man('gacha').connect(a.brn('gacha'))
+    a.brn('gacha').connect(a.man('gacha_normal'))
+    a.man('gacha_normal').connect(a.brn('gacha_normal'))
+    a.brn('gacha_normal').connect(a.man('gacha_draw'), a.man('gacha_normal'))
+    a.man('gacha_draw').connect(a.brn('gacha_draw'))
+    a.brn('gacha_draw').connect(a.man('gacha_skip'), a.man('gacha_draw'))
+    a.man('gacha_skip').connect(a.brn('gacha_skip'))
+    a.brn('gacha_skip').connect(a.man('close'))
+
+    a.man('team').connect(a.brn('team'))
+    a.brn('team').connect(a.man('team_recommend'))
+    a.man('team_recommend').connect(a.brn('team_recommend'))
+    a.brn('team_recommend').connect(a.man('team_make'))
+    a.man('team_make').connect(a.brn('team_make'))
+    a.brn('team_make').connect(a.man('team_ok'))
+    a.man('team_ok').connect(a.brn('team_ok'))
+    a.brn('team_ok').connect(a.man('mypage'))
+
+    a.man('mypage').connect(a.brn('mypage'))
+    a.brn('mypage').connect(a.man('mypage_close'))
+    a.man('mypage_close').connect(a.brn('mypage_close'))
+    a.brn('mypage_close').connect(a.man('mypage_close'))
+    
+    a.man('story_skip').connect(a.brn('story_skip'))
+    a.brn('story_skip').connect(a.man('story_summary'))
+    a.man('story_summary').connect(a.brn('story_summary'))
+    a.brn('story_summary').connect(
+        a.man('voice_harem'), 
+        a.man('menu'), 
+        a.man('story_skip'),
+        a.man('harem_skip'),
+    )
+
+    a.man('harem_skip').connect(a.brn('harem_skip'))
+    a.brn('harem_skip').connect(a.man('harem_ok'))
+    a.man('harem_ok').connect(a.brn('harem_ok'))
+    a.brn('harem_ok').connect(a.man('story_skip'), a.man('gacha'))
+
+    a.man('attack').connect(a.brn('attack'))
+    a.brn('attack').connect(
+        a.man('close'), 
+        a.man('ability'), 
+        a.man('samon'), 
+        a.man('next'), 
+        a.man('menu'), 
+        a.man('attack')
+    )
+
+    a.man('next').connect(a.brn('next'))
+    a.brn('next').connect(a.man('story_skip'), a.man('result_rankup'))
+
+    a.man('close').connect(a.brn('close'))
+    a.brn('close').connect(a.man('next'))
+
+    a.save()
+
+def tutorial():
+    a = Assister('tutorial')
+    a.dmy('head').connect(a.brn('head'))
+    a.brn('head').connect(a.man('privacy'), a.man('voice_main'), a.man('story_skip2'))
+
+    a.chain(
+        [
+            'privacy',
+            'voice_main',
+            'story_skip1',
+            'story_summary1',
+            'voice_harem',
+            'harem_skip1',
+            'harem_ok1',
+            'story_skip2',
+            'story_summary2',
+            'alisa1',
+            'attack1',
+            'alisa2',
+            'target',
+            'alisa3',
+            'attack2',
+            'lance1',
+            'attack3',
+            'alisa4',
+            'close1',
+            'alisa5',
+            'next1',
+            'story_skip3',
+            'story_summary3',
+            'alisa6',
+            'menu',
+            'menu_high_speed',
+            'alisa7',
+            'menu_back',
+            'attack4',
+            'alisa8',
+            'nike1',
+            'ability',
+            'ability_select',
+            'ability_use',
+            'ability_back',
+            'nike2',
+            'lance2',
+            'diabolos1',
+            'alisa9',
+            'attack5',
+            'diabolos2',
+            'summon',
+            'summon_select',
+            'summon_use',
+            'nike3',
+            'diabolos3',
+            'next2',
+            'rankup',
+            'advance',
+            'story_skip4',
+            'story_summary4',
+            'story_skip5',
+            'story_summary5',
+            'harem_skip2',
+            'harem_ok2',
+            'alisa10',
+            'gacha',
+            'gacha_nomal',
+            'gacha_draw',
+            'gacha_skip',
+            'gacha_get',
+            'nike4',
+            'close2',
+            'alisa11',
+            'team',
+            'lance3',
+            'close3',
+            'lance4',
+            'team_recommend',
+            'lance5',
+            'team_make',
+            'team_ok',
+            'lance6',
+            'mypage',
+            'alisa12',
+            'close4',
+            'alisa13',
+        ]
+    )
+
+    a.brn('alisa13').connect(a.man('alisa13'), exception=BranchState('restore\\start'))
+
+    a.save()
+
 def tmp():
     page()
     main()
@@ -1182,6 +1369,7 @@ def tmp():
     login()
     cache_clear()
     theater()
+    tutorial()
 
 if __name__=="__main__":
     q = queue.Queue()

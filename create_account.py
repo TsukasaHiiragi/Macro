@@ -17,7 +17,7 @@ class MyActions:
         x, y = c
         x = int((x - offset)/900*884)
         y = int(y/900*884-20)
-        self.actions.move_by_offset(x - self.cx, y - self.cy).click().pause(2)
+        self.actions.move_by_offset(x - self.cx, y - self.cy).click().pause(1.5)
         self.cx, self.cy = x, y
 
     def perform(self):
@@ -29,9 +29,9 @@ chromium_path = local.chrome_path
 options = webdriver.ChromeOptions()
 options.binary_location = chromium_path
 options.add_argument("--app=https://m.kuku.lu/recv.php")
-options.add_argument("--user-data-dir=C:/chrominum04")
+options.add_argument("--user-data-dir=C:/master")
 options.add_argument("--window-size=900,1050")
-options.add_argument("--window-position=900,0")
+options.add_argument("--window-position=2900,0")
 options.add_argument("--disable-infobars")
 options.add_argument("--disable-extensions")
 options.add_argument("--no-default-browser-check")
@@ -46,13 +46,13 @@ password = 'ahg34icb29ih4h'
 with open("output.txt", "w", encoding="utf-8") as file:
     file.write(password + '\n')
 
-for id in range(25, 61):
+for id in range(61, 73):
     options = webdriver.ChromeOptions()
     options.binary_location = chromium_path
     options.add_argument("--app=https://accounts.dmm.co.jp/welcome/signup/email/=/channel=games/back_url=DRVESRUMTh1IAENLXFgHW08CV1tVSkpdDw8ZBV1LXUBKEUJWAF8NVxcXVF9aRRIYEg5fRg9bBVoJPUIUXlhzYjMkY2szezVaCQNzfktSN3UGJmFRSHUybwkHYh5jMg__?auth_method_type=email")
     options.add_argument(f"--user-data-dir=C:/chrominum{id:0=2d}")
     options.add_argument("--window-size=900,1050")
-    options.add_argument("--window-position=0,0")
+    options.add_argument("--window-position=2000,0")
     options.add_argument("--disable-infobars")
     options.add_argument("--disable-extensions")
     options.add_argument("--no-default-browser-check")
@@ -73,7 +73,7 @@ for id in range(25, 61):
     actions.perform()
     s = pyperclip.paste()
     print(s)
-    with open("output.txt", "w", encoding="utf-8") as file:
+    with open("output.txt", "w+", encoding="utf-8") as file:
         file.write(s + '\n')
 
     coord = [
@@ -84,18 +84,18 @@ for id in range(25, 61):
 
     actions1 = MyActions(driver1)
     actions1.click(coord[0], 0)
-    actions1.actions.key_down(Keys.CONTROL).send_keys('v').key_up(Keys.CONTROL).pause(1)
+    actions1.actions.key_down(Keys.CONTROL).send_keys('v').key_up(Keys.CONTROL).pause(0.3)
     actions1.perform()
 
     pyperclip.copy(password)
     actions1.click(coord[1], 0)
-    actions1.actions.key_down(Keys.CONTROL).send_keys('v').key_up(Keys.CONTROL).pause(1)
+    actions1.actions.key_down(Keys.CONTROL).send_keys('v').key_up(Keys.CONTROL).pause(0.3)
     actions1.perform()
 
     actions1.click(coord[2], 0)
     actions1.perform()
 
-    time.sleep(10)
+    time.sleep(3)
 
     coord = [
         (1153, 283),
@@ -130,7 +130,7 @@ for id in range(25, 61):
 
     actions1.click((284, 261), 0)
     for chara in code:
-        actions1.actions.send_keys(chara).pause(0.5)
+        actions1.actions.send_keys(chara).pause(0.1)
     actions1.perform()
 
     time.sleep(5)

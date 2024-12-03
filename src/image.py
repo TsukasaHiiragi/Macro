@@ -116,8 +116,14 @@ class LeafSymbol(Symbol):
         image = Image.open(self.image_path)
         size = int(image.width*scale/50),int(image.height*scale/50)
         image_resized = image.resize(size)
+
+        screen_width, screen_height = pyautogui.size()
+        print("Screen size:", screen_width, screen_height)
         
         # with mythread.mt.screen():
+        print(self.image_path)
+        print(r.region())
+        print(image_resized.size)
         found = pyautogui.locateOnScreen(
             image_resized, region=r.region(), confidence=0.7)
 
@@ -135,7 +141,7 @@ class LeafSymbol(Symbol):
     
     def capture(self):
         scale = mythread.mt.local.scale
-        mu,lam = mythread.mt.local.position
+        mu,lam = mythread.mt.local.position_org
         
         r = Region(self.region)
         r.scaling(scale/50, mythread.centor)

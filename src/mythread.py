@@ -65,12 +65,6 @@ class MyThread:
         self.__connect = queue.Queue()
         self.root = None
         self.is_server = is_server
-        self.__thread_disp = [None]*12
-        for i in range(12):
-            self.__thread_disp[i] = threading.Thread(target=self.__display.mainloop, daemon=True, kwargs={'id':i})
-            self.__thread_disp[i].start()
-        self._thread_battle = threading.Thread(target=self.pop_battle, daemon=True)
-        self._thread_battle.start()
     
     def start(self, q=None, qs=None, id=0, ids=None, timeout=None):
         self.timeout = timeout*3600 if timeout is not None else None
@@ -112,6 +106,13 @@ class MyThread:
                 print('trying connection...')
                 sock.connect((local.pair_ip, 796))
                 print('success to connect')
+
+            self.__thread_disp = [None]*12
+            for i in range(12):
+                self.__thread_disp[i] = threading.Thread(target=self.__display.mainloop, daemon=True, kwargs={'id':i})
+                self.__thread_disp[i].start()
+            self._thread_battle = threading.Thread(target=self.pop_battle, daemon=True)
+            self._thread_battle.start()
             
             send = threading.Thread(target=sender, daemon=True, kwargs={'sock': sock, 'q': self.__connect})
             recv = threading.Thread(target=receiver, daemon=True, kwargs={'sock': sock})

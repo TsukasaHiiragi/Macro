@@ -678,6 +678,11 @@ def work():
     exe = Executer()
     exe.run('work\\head.dmy.stt.json')
 
+def tutorial():
+    exe = Executer()
+    openwindow(exe, mythread.mt.local.thread_id)
+    exe.run('tutorial\\head.dmy.stt.json', timeout=None)
+
 def epic(id,attr,scroll,position,trial):
     def _quest(exe:Executer,id,trial):
         quest(id,'epic',trial[exe.sys_args['level']],f'uuid_{id}',1)
