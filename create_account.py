@@ -46,7 +46,7 @@ password = 'ahg34icb29ih4h'
 with open("output.txt", "w", encoding="utf-8") as file:
     file.write(password + '\n')
 
-for id in range(61, 73):
+for id in range(13,25):
     options = webdriver.ChromeOptions()
     options.binary_location = chromium_path
     options.add_argument("--app=https://accounts.dmm.co.jp/welcome/signup/email/=/channel=games/back_url=DRVESRUMTh1IAENLXFgHW08CV1tVSkpdDw8ZBV1LXUBKEUJWAF8NVxcXVF9aRRIYEg5fRg9bBVoJPUIUXlhzYjMkY2szezVaCQNzfktSN3UGJmFRSHUybwkHYh5jMg__?auth_method_type=email")

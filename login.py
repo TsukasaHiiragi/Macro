@@ -30,10 +30,10 @@ coord = [
     (2255, 370),
     (2447, 418),
     (2315, 368),
-    (2836, 276),
+    (2826, 613),
 ]
 
-for id in range(61, 73):
+for id in range(13, 25):
     options = webdriver.ChromeOptions()
     options.binary_location = chromium_path
     options.add_argument("--app=https://pc-play.games.dmm.co.jp/play/kamipror/")
